@@ -1,5 +1,7 @@
 <template>
-  <div :class="['graph-editor-container', currentTheme]">
+  <div :class="['graph-editor-container', currentTheme]" style="margin-top: 120px;">
+    <Navbar :theme="currentTheme" /> <!-- Navbar fijo en la parte superior -->
+
     <header class="toolbar-top">
       <div class="header-content">
         <h1>Pizarra de Grafos</h1>
@@ -51,6 +53,16 @@
             </defs>
 
             <g v-for="edge in edgesWithCoords" :key="edge.id">
+              <!-- Transparent path for increased click sensitivity -->
+              <path
+                :d="edge.pathData"
+                stroke="transparent"
+                stroke-width="10"
+                fill="none"
+                style="pointer-events: visibleStroke;"
+                @click.stop="selectElement(edge)"
+              />
+              <!-- Visible path for rendering -->
               <path
                 :d="edge.pathData"
                 :stroke="edge.color"
@@ -58,7 +70,7 @@
                 :stroke-dasharray="edge.strokeDasharray"
                 fill="none"
                 :marker-end="edge.directed ? 'url(#arrow)' : null"
-                @click.stop="selectElement(edge)"
+                style="pointer-events: none;"
                 :class="{ 'selected': selectedElement && selectedElement.id === edge.id }"
               />
               <text
@@ -108,7 +120,8 @@
           <input type="text" v-model="selectedElement.label" placeholder="Nombre" @keyup.enter="isEditing = false" autofocus />
           <div class="color-pickers">
             <label>Relleno: <input type="color" v-model="selectedElement.color" /></label>
-            <label>Borde: <input type="color" v-model="selectedElement.borderColor" /></label> </div>
+            <label>Borde: <input type="color" v-model="selectedElement.borderColor" /></label>
+          </div>
           <button @click="isEditing = false">Guardar</button>
         </div>
 
@@ -169,12 +182,21 @@
       </div>
     </div>
 
-    <button @click="showHelp = true" class="help-button" title="Ayuda">?</button>
+    <!-- AlgorithmSelector button above Help button -->
+    <button @click="showSelector = true" class="help-button" title="Algoritmo de Johnson" style="bottom: 85px;">🎨</button>
+    <button @click="showHelp = true" class="help-button" title="Ayuda" style="bottom: 25px;">?</button>
 
     <Help 
       v-if="showHelp" 
       :theme="currentTheme"
       @close="showHelp = false" 
+    />
+    <AlgorithmSelector 
+      v-if="showSelector" 
+      :theme="currentTheme"
+      :nodes="nodes"
+      :edges="edges"
+      @close="showSelector = false" 
     />
   </div>
 </template>
@@ -183,6 +205,8 @@
 import { ref, computed } from "vue";
 import jsPDF from "jspdf";
 import Help from './components/Help.vue';
+import Navbar from './components/Navbar.vue';
+import AlgorithmSelector from './components/AlgorithmSelector.vue';
 
 const nodes = ref([]);
 const edges = ref([]);
@@ -193,6 +217,7 @@ const showMatrix = ref(false);
 const nodeShape = ref("circle");
 const currentTheme = ref("light-theme");
 const showHelp = ref(false);
+const showSelector = ref(false);
 const canvasBackgroundStyle = ref('grid');
 const canvasBackgroundColor = ref(currentTheme.value === 'light-theme' ? '#ffffff' : '#333333');
 const isAddingNode = ref(false);
@@ -207,7 +232,9 @@ const hasPanned = ref(false);
 const panDrag = ref(null);
 const importFileInput = ref(null);
 const graphSvg = ref(null);
-const lastMousePos = ref({ x: null, y: null }); // Track last mouse position for delta calculation
+const lastMousePos = ref({ x: null, y: null });
+const draggedNode = ref(null);
+const draggedHandle = ref(null);
 
 let nextNodeId = 1;
 let nextEdgeId = 1;
@@ -423,7 +450,7 @@ const handleWheel = (event) => {
 };
 
 const startPan = (event) => {
-  if (!isZoomEnabled.value || isAddingNode.value || isAddingEdge.value || isEraserActive.value || isEditing.value) return;
+  if (isAddingNode.value || isAddingEdge.value || isEraserActive.value || isEditing.value) return;
   isPanning.value = true;
   const svgRect = graphSvg.value.getBoundingClientRect();
   lastMousePos.value = {
@@ -436,6 +463,7 @@ const startPan = (event) => {
     startPanX: panX.value,
     startPanY: panY.value
   };
+  hasPanned.value = false;
 };
 
 const deselectElement = () => {
@@ -495,12 +523,8 @@ const selectElement = (elementFromCoords) => {
 
   if (!originalElement) return;
 
-  if (selectedElement.value && selectedElement.value.id === originalElement.id) {
-    isEditing.value = true;
-  } else {
-    selectedElement.value = originalElement;
-    isEditing.value = false;
-  }
+  selectedElement.value = originalElement;
+  isEditing.value = originalElement.type === 'edge'; // Edit edge immediately on single click
 };
 
 const handleNodeClick = (node) => {
@@ -511,7 +535,7 @@ const handleNodeClick = (node) => {
     if (!edgeStartNode.value) {
       edgeStartNode.value = node;
     } else {
-      edges.value.push({
+      const newEdge = {
         id: nextEdgeId++,
         from: edgeStartNode.value.id,
         to: node.id,
@@ -524,17 +548,16 @@ const handleNodeClick = (node) => {
         loopSize: 50,
         loopAngle: 0,
         curveOffset: 0,
-      });
+      };
+      edges.value.push(newEdge);
       edgeStartNode.value = null;
-      // Do not deactivate isAddingEdge here to keep edge mode active
+      selectElement(newEdge); // Select and edit the new edge
+      isEditing.value = true;
     }
   } else {
     selectElement(node);
   }
 };
-
-const draggedNode = ref(null);
-const draggedHandle = ref(null);
 
 const startDrag = (node, event) => {
   if (isEraserActive.value || isEditing.value || isAddingEdge.value || isAddingNode.value || draggedHandle.value) return;
@@ -551,12 +574,14 @@ const startDrag = (node, event) => {
 
 const onDrag = (event) => {
   if (draggedNode.value) {
+    const svgRect = graphSvg.value.getBoundingClientRect();
     const dx = (event.clientX - draggedNode.value.clickX) / zoomLevel.value;
     const dy = (event.clientY - draggedNode.value.clickY) / zoomLevel.value;
     if (!draggedNode.value.isDragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
         draggedNode.value.isDragging = true;
     }
     if (draggedNode.value.isDragging) {
+        // Allow nodes to move freely to any position on the canvas
         draggedNode.value.node.x = draggedNode.value.startX + dx;
         draggedNode.value.node.y = draggedNode.value.startY + dy;
     }
@@ -598,12 +623,13 @@ const onDrag = (event) => {
       }
   }
 
-  if (isPanning.value && isZoomEnabled.value && !draggedNode.value && !draggedHandle.value) {
+  if (isPanning.value && !draggedNode.value && !draggedHandle.value) {
     const svgRect = graphSvg.value.getBoundingClientRect();
     const mouseX = event.clientX - svgRect.left;
     const mouseY = event.clientY - svgRect.top;
 
     if (lastMousePos.value.x !== null && lastMousePos.value.y !== null) {
+      // Update panX and panY to follow cursor movement
       const dx = (mouseX - lastMousePos.value.x) / zoomLevel.value;
       const dy = (mouseY - lastMousePos.value.y) / zoomLevel.value;
       panX.value += dx;
@@ -940,5 +966,4 @@ const changeStyle = () => {
   currentTheme.value = currentTheme.value === "light-theme" ? "dark-theme" : "light-theme";
   canvasBackgroundColor.value = currentTheme.value === 'light-theme' ? '#ffffff' : '#333333';
 };
-
 </script>
