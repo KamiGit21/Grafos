@@ -12,10 +12,10 @@
           <p><strong>Camino crítico:</strong> {{ criticalPath }}</p>
           <p v-if="hasCycles">¡Advertencia! El grafo tiene ciclos. Los resultados pueden ser inexactos.</p>
         </div>
-        <svg class="graph-svg" width="900" height="700" :viewBox="viewBox">
-          <g :transform="`translate(${fitPanX}, ${fitPanY}) scale(${scale})`">
+        <svg class="graph-svg" width="900" height="700">
+          <g :transform="`scale(${scale}) translate(${fitPanX}, ${fitPanY})`">
             <defs>
-              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <marker id="arrow" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" :fill="arrowColor"></path>
               </marker>
             </defs>
@@ -47,7 +47,7 @@
               </text>
             </g>
 
-            <g v-for="node in augmentedNodes" :key="node.id"  
+            <g v-for="node in normalizedNodes" :key="node.id"  
               :transform="`translate(${node.x}, ${node.y})`"
               :class="['node-group', node.shape, { 'critical': node.slack === 0 }]">
               <circle v-if="node.shape === 'circle'" :r="getNodeRadius(node)" :fill="node.color" :stroke="node.borderColor" stroke-width="2"/>
@@ -74,7 +74,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import jsPDF from 'jspdf';
 
 const emit = defineEmits(['close']);
@@ -178,50 +178,20 @@ const augmentedNodes = computed(() => {
   }));
 });
 
-const augmentedEdges = computed(() => {
-  return props.edges.map(e => ({
-    ...e,
-    slack: (lsMap.value.get(e.to) || 0) - (esMap.value.get(e.from) || 0) - (Number(e.value) || 0)
+const minX = computed(() => Math.min(...augmentedNodes.value.map(n => n.x - getNodeRadius(n))));
+const minY = computed(() => Math.min(...augmentedNodes.value.map(n => n.y - getNodeRadius(n) - 30)));
+const maxX = computed(() => Math.max(...augmentedNodes.value.map(n => n.x + getNodeRadius(n))));
+const maxY = computed(() => Math.max(...augmentedNodes.value.map(n => n.y + getNodeRadius(n) + 30)));
+
+const normalizedNodes = computed(() => {
+  return augmentedNodes.value.map(node => ({
+    ...node,
+    x: node.x - minX.value,
+    y: node.y - minY.value
   }));
 });
 
-const projectDuration = computed(() => {
-  const maxEs = Math.max(...props.nodes.map(n => esMap.value.get(n.id) || 0));
-  return isFinite(maxEs) ? maxEs : 0;
-});
-
-const criticalPath = computed(() => {
-  if (topoOrder.value.length === 0 || hasCycles.value) return 'Grafo inválido (ciclos detectados)';
-  let maxSink = props.nodes.find(n => outDegrees.value[n.id] === 0);
-  props.nodes.forEach(n => {
-    if (outDegrees.value[n.id] === 0) {
-      const esN = esMap.value.get(n.id) || 0;
-      const esMax = esMap.value.get(maxSink.id) || 0;
-      if (esN > esMax) maxSink = n;
-    }
-  });
-  const path = [];
-  let current = maxSink;
-  while (current) {
-    path.unshift(current.label);
-    if (inDegrees.value[current.id] === 0) break;
-    const preds = props.edges.filter(e => e.to === current.id);
-    let pred = null;
-    for (let pEdge of preds) {
-      const predNode = props.nodes.find(n => n.id === pEdge.from);
-      const weight = Number(pEdge.value) || 0;
-      if ((esMap.value.get(current.id) || 0) === (esMap.value.get(predNode.id) || 0) + weight) {
-        pred = predNode;
-        break;
-      }
-    }
-    if (!pred) break;
-    current = pred;
-  }
-  return path.join(' → ');
-});
-
-const nodeMap = computed(() => new Map(augmentedNodes.value.map(node => [node.id, node])));
+const nodeMap = computed(() => new Map(normalizedNodes.value.map(node => [node.id, node])));
 
 const edgesWithCoords = computed(() => {
   return augmentedEdges.value.map(edge => {
@@ -290,29 +260,69 @@ const edgesWithCoords = computed(() => {
   }).filter(e => e !== null);
 });
 
-const minX = computed(() => Math.min(...augmentedNodes.value.map(n => n.x - getNodeRadius(n))));
-const maxX = computed(() => Math.max(...augmentedNodes.value.map(n => n.x + getNodeRadius(n))));
-const minY = computed(() => Math.min(...augmentedNodes.value.map(n => n.y - getNodeRadius(n) - 30)));
-const maxY = computed(() => Math.max(...augmentedNodes.value.map(n => n.y + getNodeRadius(n) + 30)));
+const augmentedEdges = computed(() => {
+  return props.edges.map(e => ({
+    ...e,
+    slack: (lsMap.value.get(e.to) || 0) - (esMap.value.get(e.from) || 0) - (Number(e.value) || 0)
+  }));
+});
 
-const viewBox = computed(() => {
-  const width = maxX.value - minX.value;
-  const height = maxY.value - minY.value;
-  return `${minX.value} ${minY.value} ${width} ${height}`;
+const projectDuration = computed(() => {
+  const maxEs = Math.max(...props.nodes.map(n => esMap.value.get(n.id) || 0));
+  return isFinite(maxEs) ? maxEs : 0;
+});
+
+const criticalPath = computed(() => {
+  if (topoOrder.value.length === 0 || hasCycles.value) return 'Grafo inválido (ciclos detectados)';
+  let maxSink = props.nodes.find(n => outDegrees.value[n.id] === 0);
+  props.nodes.forEach(n => {
+    if (outDegrees.value[n.id] === 0) {
+      const esN = esMap.value.get(n.id) || 0;
+      const esMax = esMap.value.get(maxSink.id) || 0;
+      if (esN > esMax) maxSink = n;
+    }
+  });
+  const path = [];
+  let current = maxSink;
+  while (current) {
+    path.unshift(current.label);
+    if (inDegrees.value[current.id] === 0) break;
+    const preds = props.edges.filter(e => e.to === current.id);
+    let pred = null;
+    for (let pEdge of preds) {
+      const predNode = props.nodes.find(n => n.id === pEdge.from);
+      const weight = Number(pEdge.value) || 0;
+      if ((esMap.value.get(current.id) || 0) === (esMap.value.get(predNode.id) || 0) + weight) {
+        pred = predNode;
+        break;
+      }
+    }
+    if (!pred) break;
+    current = pred;
+  }
+  return path.join(' → ');
 });
 
 const scale = computed(() => {
   const svgWidth = 900;
-  const svgHeight = 700;
+  const svgHeight = 600; // Reduced to account for info-panel
   const graphWidth = maxX.value - minX.value;
   const graphHeight = maxY.value - minY.value;
-  const scaleX = graphWidth > 0 ? svgWidth / graphWidth : 1;
-  const scaleY = graphHeight > 0 ? (svgHeight - 100) / graphHeight : 1; // Account for info-panel
-  return Math.min(scaleX, scaleY, 1); // Ensure graph fits within SVG
+  const padding = 50; // Add padding to prevent clipping
+  const scaleX = graphWidth > 0 ? (svgWidth - 2 * padding) / graphWidth : 1;
+  const scaleY = graphHeight > 0 ? (svgHeight - 2 * padding) / graphHeight : 1;
+  return Math.min(scaleX, scaleY, 1);
 });
 
-const fitPanX = computed(() => (900 - (maxX.value - minX.value) * scale.value) / 2 - minX.value * scale.value);
-const fitPanY = computed(() => (700 - (maxY.value - minY.value) * scale.value) / 2 - minY.value * scale.value);
+const fitPanX = computed(() => {
+  const graphWidth = (maxX.value - minX.value) * scale.value;
+  return (900 - graphWidth) / 2 / scale.value;
+});
+
+const fitPanY = computed(() => {
+  const graphHeight = (maxY.value - minY.value) * scale.value;
+  return (600 - graphHeight) / 2 / scale.value + 50; // Extra offset for info-panel
+});
 
 const getNodeRadius = (node) => {
   const baseRadius = 15;
@@ -348,29 +358,23 @@ const exportImage = async () => {
     clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   }
 
-  // Set viewBox to match computed bounds
-  clonedSvg.setAttribute('viewBox', viewBox.value);
-
-  // Adjust the transform to match the displayed graph
   const g = clonedSvg.querySelector('g');
   if (g) {
-    g.setAttribute('transform', `translate(${fitPanX.value}, ${fitPanY.value}) scale(${scale.value})`);
+    g.setAttribute('transform', `scale(${scale.value}) translate(${fitPanX.value}, ${fitPanY.value})`);
   }
 
-  // Add background
   const backgroundStyle = `
-    <rect x="${minX.value}" y="${minY.value}" width="${maxX.value - minX.value}" height="${maxY.value - minY.value}" 
+    <rect x="0" y="0" width="900" height="700" 
       fill="${props.theme === 'light-theme' ? '#ffffff' : '#2a2a2a'}" />
   `;
   const parser = new DOMParser();
   const backgroundElement = parser.parseFromString(backgroundStyle, 'image/svg+xml').documentElement;
   clonedSvg.insertBefore(backgroundElement, clonedSvg.firstChild);
 
-  // Include info-panel content in the export
   const infoPanel = document.querySelector('.info-panel');
   if (infoPanel) {
     const infoText = `
-      <foreignObject x="${minX.value}" y="${minY.value - 80}" width="900" height="80">
+      <foreignObject x="0" y="10" width="900" height="80">
         <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: Arial, sans-serif; font-size: 14px; color: ${props.theme === 'light-theme' ? '#333' : '#e0e0e0'}; text-align: center;">
           <p><strong>Duración total del proyecto:</strong> ${Math.round(projectDuration.value)}</p>
           <p><strong>Camino crítico:</strong> ${criticalPath.value}</p>
