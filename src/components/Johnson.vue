@@ -66,7 +66,11 @@
       </main>
 
       <footer class="johnson-modal-footer">
-        <button @click="exportImage">Exportar Imagen</button>
+        <!--<button @click="exportImage">Exportar Imagen</button>-->
+        <button @click="exportJson">Exportar JSON</button>
+        <input type="file" ref="fileInput" style="display: none;" accept=".json" @change="importJson" />
+        <button @click="triggerImport">Importar JSON</button>
+        <button @click="clearGraph">Eliminar Todo</button>
         <button @click="closeModal">Cerrar</button>
       </footer>
     </div>
@@ -74,7 +78,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import jsPDF from 'jspdf';
 
 const emit = defineEmits(['close']);
@@ -83,23 +87,48 @@ const props = defineProps({
   theme: {
     type: String,
     default: 'light-theme'
-  },
-  nodes: {
-    type: Array,
-    required: true
-  },
-  edges: {
-    type: Array,
-    required: true
   }
 });
+
+// Estado interno para los nodos y aristas generados por el algoritmo
+const internalNodes = ref([]);
+const internalEdges = ref([]);
+
+// Generar un grafo de ejemplo con 4 nodos para el algoritmo de Johnson
+const generateExampleGraph = () => {
+  const nodes = [
+    { id: '1', label: 'A', x: 100, y: 100, shape: 'circle', color: '#fff', borderColor: '#000' },
+    { id: '2', label: 'B', x: 250, y: 100, shape: 'circle', color: '#fff', borderColor: '#000' },
+    { id: '3', label: 'C', x: 250, y: 250, shape: 'circle', color: '#fff', borderColor: '#000' },
+    { id: '4', label: 'D', x: 400, y: 100, shape: 'circle', color: '#fff', borderColor: '#000' }
+  ];
+  const edges = [
+    { id: 'e1', from: '1', to: '2', value: 5 },
+    { id: 'e2', from: '2', to: '4', value: 3 },
+    { id: 'e3', from: '1', to: '3', value: 6 },
+    { id: 'e4', from: '3', to: '4', value: 2 }
+  ];
+  return { nodes, edges };
+};
+
+// Inicializar el grafo con un ejemplo
+const initializeGraph = () => {
+  const { nodes, edges } = generateExampleGraph();
+  internalNodes.value = nodes;
+  internalEdges.value = edges;
+};
+
+// Llamar a la inicialización al montar el componente
+initializeGraph();
+
+const fileInput = ref(null);
 
 const arrowColor = computed(() => props.theme === 'light-theme' ? '#555' : '#ccc');
 
 const inDegrees = computed(() => {
   const deg = {};
-  props.nodes.forEach(n => deg[n.id] = 0);
-  props.edges.forEach(e => {
+  internalNodes.value.forEach(n => deg[n.id] = 0);
+  internalEdges.value.forEach(e => {
     if (deg[e.to] !== undefined) deg[e.to]++;
   });
   return deg;
@@ -107,28 +136,28 @@ const inDegrees = computed(() => {
 
 const topoOrder = computed(() => {
   const deg = { ...inDegrees.value };
-  const queue = props.nodes.filter(n => deg[n.id] === 0);
+  const queue = internalNodes.value.filter(n => deg[n.id] === 0);
   const order = [];
   const q = [...queue];
   while (q.length > 0) {
     const u = q.shift();
     order.push(u);
-    props.edges.filter(e => e.from === u.id).forEach(e => {
+    internalEdges.value.filter(e => e.from === u.id).forEach(e => {
       deg[e.to]--;
-      if (deg[e.to] === 0) q.push(props.nodes.find(n => n.id === e.to));
+      if (deg[e.to] === 0) q.push(internalNodes.value.find(n => n.id === e.to));
     });
   }
-  return order.length === props.nodes.length ? order : [];
+  return order.length === internalNodes.value.length ? order : [];
 });
 
-const hasCycles = computed(() => topoOrder.value.length < props.nodes.length);
+const hasCycles = computed(() => topoOrder.value.length < internalNodes.value.length);
 
 const esMap = computed(() => {
   if (topoOrder.value.length === 0) return new Map();
-  const es = new Map(props.nodes.map(n => [n.id, inDegrees.value[n.id] === 0 ? 0 : Number.NEGATIVE_INFINITY]));
+  const es = new Map(internalNodes.value.map(n => [n.id, inDegrees.value[n.id] === 0 ? 0 : Number.NEGATIVE_INFINITY]));
   topoOrder.value.forEach(node => {
     const nodeEs = es.get(node.id);
-    props.edges.filter(e => e.from === node.id).forEach(edge => {
+    internalEdges.value.filter(e => e.from === node.id).forEach(edge => {
       const weight = Number(edge.value) || 0;
       const newEs = nodeEs + weight;
       const curr = es.get(edge.to);
@@ -140,8 +169,8 @@ const esMap = computed(() => {
 
 const outDegrees = computed(() => {
   const deg = {};
-  props.nodes.forEach(n => deg[n.id] = 0);
-  props.edges.forEach(e => {
+  internalNodes.value.forEach(n => deg[n.id] = 0);
+  internalEdges.value.forEach(e => {
     if (deg[e.from] !== undefined) deg[e.from]++;
   });
   return deg;
@@ -151,11 +180,11 @@ const reverseTopo = computed(() => topoOrder.value.length > 0 ? [...topoOrder.va
 
 const lsMap = computed(() => {
   if (topoOrder.value.length === 0) return new Map();
-  const ls = new Map(props.nodes.map(n => [n.id, Number.POSITIVE_INFINITY]));
-  const sinks = props.nodes.filter(n => outDegrees.value[n.id] === 0);
+  const ls = new Map(internalNodes.value.map(n => [n.id, Number.POSITIVE_INFINITY]));
+  const sinks = internalNodes.value.filter(n => outDegrees.value[n.id] === 0);
   sinks.forEach(sink => ls.set(sink.id, esMap.value.get(sink.id) || 0));
   reverseTopo.value.forEach(node => {
-    const incomingEdges = props.edges.filter(e => e.to === node.id);
+    const incomingEdges = internalEdges.value.filter(e => e.to === node.id);
     incomingEdges.forEach(edge => {
       const predId = edge.from;
       const weight = Number(edge.value) || 0;
@@ -170,7 +199,7 @@ const lsMap = computed(() => {
 });
 
 const augmentedNodes = computed(() => {
-  return props.nodes.map(n => ({
+  return internalNodes.value.map(n => ({
     ...n,
     es: esMap.value.get(n.id) || 0,
     ls: lsMap.value.get(n.id) || 0,
@@ -261,21 +290,21 @@ const edgesWithCoords = computed(() => {
 });
 
 const augmentedEdges = computed(() => {
-  return props.edges.map(e => ({
+  return internalEdges.value.map(e => ({
     ...e,
     slack: (lsMap.value.get(e.to) || 0) - (esMap.value.get(e.from) || 0) - (Number(e.value) || 0)
   }));
 });
 
 const projectDuration = computed(() => {
-  const maxEs = Math.max(...props.nodes.map(n => esMap.value.get(n.id) || 0));
+  const maxEs = Math.max(...internalNodes.value.map(n => esMap.value.get(n.id) || 0));
   return isFinite(maxEs) ? maxEs : 0;
 });
 
 const criticalPath = computed(() => {
   if (topoOrder.value.length === 0 || hasCycles.value) return 'Grafo inválido (ciclos detectados)';
-  let maxSink = props.nodes.find(n => outDegrees.value[n.id] === 0);
-  props.nodes.forEach(n => {
+  let maxSink = internalNodes.value.find(n => outDegrees.value[n.id] === 0);
+  internalNodes.value.forEach(n => {
     if (outDegrees.value[n.id] === 0) {
       const esN = esMap.value.get(n.id) || 0;
       const esMax = esMap.value.get(maxSink.id) || 0;
@@ -287,10 +316,10 @@ const criticalPath = computed(() => {
   while (current) {
     path.unshift(current.label);
     if (inDegrees.value[current.id] === 0) break;
-    const preds = props.edges.filter(e => e.to === current.id);
+    const preds = internalEdges.value.filter(e => e.to === current.id);
     let pred = null;
     for (let pEdge of preds) {
-      const predNode = props.nodes.find(n => n.id === pEdge.from);
+      const predNode = internalNodes.value.find(n => n.id === pEdge.from);
       const weight = Number(pEdge.value) || 0;
       if ((esMap.value.get(current.id) || 0) === (esMap.value.get(predNode.id) || 0) + weight) {
         pred = predNode;
@@ -305,10 +334,10 @@ const criticalPath = computed(() => {
 
 const scale = computed(() => {
   const svgWidth = 900;
-  const svgHeight = 600; // Reduced to account for info-panel
+  const svgHeight = 600;
   const graphWidth = maxX.value - minX.value;
   const graphHeight = maxY.value - minY.value;
-  const padding = 50; // Add padding to prevent clipping
+  const padding = 50;
   const scaleX = graphWidth > 0 ? (svgWidth - 2 * padding) / graphWidth : 1;
   const scaleY = graphHeight > 0 ? (svgHeight - 2 * padding) / graphHeight : 1;
   return Math.min(scaleX, scaleY, 1);
@@ -321,7 +350,7 @@ const fitPanX = computed(() => {
 
 const fitPanY = computed(() => {
   const graphHeight = (maxY.value - minY.value) * scale.value;
-  return (600 - graphHeight) / 2 / scale.value + 50; // Extra offset for info-panel
+  return (600 - graphHeight) / 2 / scale.value + 50;
 });
 
 const getNodeRadius = (node) => {
@@ -416,6 +445,63 @@ const exportImage = async () => {
 
   img.src = url;
 };
+
+const exportJson = () => {
+  const graphData = {
+    nodes: internalNodes.value,
+    edges: internalEdges.value
+  };
+  const jsonString = JSON.stringify(graphData, null, 2);
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'johnson_graph.json';
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const triggerImport = () => {
+  fileInput.value.click();
+};
+
+const importJson = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const graphData = JSON.parse(e.target.result);
+      if (graphData.nodes && Array.isArray(graphData.nodes) && graphData.edges && Array.isArray(graphData.edges)) {
+        // Validar que los valores de las aristas sean >= 1
+        const invalidEdges = graphData.edges.filter(edge => !edge.value || edge.value < 1);
+        if (invalidEdges.length > 0) {
+          alert('Error: El archivo JSON contiene aristas con valores menores a 1 o no numéricos.');
+          return;
+        }
+        internalNodes.value = graphData.nodes;
+        internalEdges.value = graphData.edges;
+      } else {
+        alert('Error: El archivo JSON no tiene el formato correcto. Debe contener "nodes" y "edges" como arreglos.');
+      }
+    } catch (err) {
+      console.error('Error al parsear JSON:', err);
+      alert('Error al leer el archivo JSON.');
+    }
+    fileInput.value.value = ''; // Reset input
+  };
+  reader.onerror = () => {
+    alert('Error al leer el archivo.');
+    fileInput.value.value = '';
+  };
+  reader.readAsText(file);
+};
+
+const clearGraph = () => {
+  internalNodes.value = [];
+  internalEdges.value = [];
+};
 </script>
 
 <style scoped>
@@ -459,7 +545,7 @@ const exportImage = async () => {
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
   overflow: hidden;
   background-color: v-bind('theme === "light-theme" ? "#f9f9f9" : "#3a3a3a"');
-  border: 2px solid v-bind('theme === "light-theme" ? "#4a90e2" : "#6ab0ff"');
+  border: 2px solid v-bind('theme === "light-theme" ? "#4a90e2" : "#6ab4ff"');
 }
 
 .johnson-modal-header {
@@ -513,7 +599,7 @@ const exportImage = async () => {
   flex-grow: 1;
   background-color: v-bind('theme === "light-theme" ? "#ffffff" : "#2a2a2a"');
   border-radius: 5px;
-  border: 2px solid v-bind('theme === "light-theme" ? "#4a90e2" : "#6ab0ff"');
+  border: 2px solid v-bind('theme === "light-theme" ? "#4a90e2" : "#6ab4ff"');
 }
 
 .edge-label, .edge-slack-label {
