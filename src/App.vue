@@ -197,6 +197,8 @@
       :nodes="nodes"
       :edges="edges"
       @close="showSelector = false" 
+      @update-graph="updateFromJohnson"
+      @clear-graph="clearCanvas"
     />
   </div>
 </template>
@@ -259,7 +261,7 @@ const edgesWithCoords = computed(() => {
         const p1x = from.x + Math.cos(tangentAngle) * nodeRadius;
         const p1y = from.y + Math.sin(tangentAngle) * nodeRadius;
         const p2x = from.x - Math.cos(tangentAngle) * nodeRadius;
-        const p2y = from.y - Math.sin(tangentAngle) * nodeRadius;
+        const p2y = from.y + Math.sin(tangentAngle) * nodeRadius;
         
         const controlPointX = from.x + Math.cos(angleRad) * (nodeRadius + 2 * loopRadius);
         const controlPointY = from.y + Math.sin(angleRad) * (nodeRadius + 2 * loopRadius);
@@ -524,7 +526,7 @@ const selectElement = (elementFromCoords) => {
   if (!originalElement) return;
 
   selectedElement.value = originalElement;
-  isEditing.value = originalElement.type === 'edge'; // Edit edge immediately on single click
+  isEditing.value = true; // Habilitar edición para nodos y aristas
 };
 
 const handleNodeClick = (node) => {
@@ -581,7 +583,6 @@ const onDrag = (event) => {
         draggedNode.value.isDragging = true;
     }
     if (draggedNode.value.isDragging) {
-        // Allow nodes to move freely to any position on the canvas
         draggedNode.value.node.x = draggedNode.value.startX + dx;
         draggedNode.value.node.y = draggedNode.value.startY + dy;
     }
@@ -629,7 +630,6 @@ const onDrag = (event) => {
     const mouseY = event.clientY - svgRect.top;
 
     if (lastMousePos.value.x !== null && lastMousePos.value.y !== null) {
-      // Update panX and panY to follow cursor movement
       const dx = (mouseX - lastMousePos.value.x) / zoomLevel.value;
       const dy = (mouseY - lastMousePos.value.y) / zoomLevel.value;
       panX.value += dx;
@@ -965,5 +965,13 @@ const importJSON = (event) => {
 const changeStyle = () => {
   currentTheme.value = currentTheme.value === "light-theme" ? "dark-theme" : "light-theme";
   canvasBackgroundColor.value = currentTheme.value === 'light-theme' ? '#ffffff' : '#333333';
+};
+
+const updateFromJohnson = (data) => {
+  nodes.value = data.nodes;
+  edges.value = data.edges;
+  nextNodeId = data.nextNodeId || (Math.max(0, ...nodes.value.map(n => n.id)) + 1) || 1;
+  nextEdgeId = data.nextEdgeId || (Math.max(0, ...edges.value.map(e => e.id)) + 1) || 1;
+  // No actualizamos theme, background, etc., a menos que se incluya en data
 };
 </script>

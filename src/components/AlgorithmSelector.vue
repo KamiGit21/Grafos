@@ -7,17 +7,36 @@
       </header>
       
       <main class="selector-modal-body">
-        <button @click="selectJohnson" class="select-button">Johnson</button>
+        <div class="algorithm-option">
+          <button @click="showJohnsonOptions = !showJohnsonOptions" class="select-button">
+            Algoritmo de Johnson {{ showJohnsonOptions ? '▲' : '▼' }}
+          </button>
+          <div v-if="showJohnsonOptions" class="sub-options">
+            <button @click="selectJohnson('max')" class="sub-option-button">Maximizar</button>
+            <button @click="selectJohnson('min')" class="sub-option-button">Minimizar</button>
+          </div>
+        </div>
         <button @click="selectOther" class="select-button">Otra Opción</button>
       </main>
     </div>
 
     <Johnson 
-      v-if="showJohnson" 
+      v-if="showJohnson === 'max'" 
       :nodes="nodes"
       :edges="edges"
       :theme="theme"
-      @close="showJohnson = false" 
+      @close="showJohnson = null" 
+      @update-graph="$emit('update-graph', $event)"
+      @clear-graph="$emit('clear-graph')"
+    />
+    <JohnsonMin 
+      v-if="showJohnson === 'min'" 
+      :nodes="nodes"
+      :edges="edges"
+      :theme="theme"
+      @close="showJohnson = null" 
+      @update-graph="$emit('update-graph', $event)"
+      @clear-graph="$emit('clear-graph')"
     />
   </div>
 </template>
@@ -25,8 +44,9 @@
 <script setup>
 import { ref } from 'vue';
 import Johnson from './Johnson.vue';
+import JohnsonMin from './JohnsonMin.vue';
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'update-graph', 'clear-graph']);
 
 const props = defineProps({
   theme: {
@@ -43,10 +63,12 @@ const props = defineProps({
   }
 });
 
-const showJohnson = ref(false);
+const showJohnson = ref(null);
+const showJohnsonOptions = ref(false);
 
-const selectJohnson = () => {
-  showJohnson.value = true;
+const selectJohnson = (type) => {
+  showJohnson.value = type;
+  showJohnsonOptions.value = false;
 };
 
 const selectOther = () => {
@@ -54,7 +76,7 @@ const selectOther = () => {
 };
 
 const closeModal = () => {
-  showJohnson.value = false;
+  showJohnson.value = null;
   emit('close');
 };
 </script>
@@ -109,6 +131,10 @@ const closeModal = () => {
   text-align: center;
 }
 
+.algorithm-option {
+  margin-bottom: 15px;
+}
+
 .select-button {
   display: block;
   width: 80%;
@@ -120,6 +146,22 @@ const closeModal = () => {
   transition: background-color 0.2s;
 }
 
+.sub-options {
+  width: 80%;
+  margin: 5px auto 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sub-option-button {
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
 /* Theme styles */
 .light-theme {
   background-color: #f9f9f9;
@@ -128,12 +170,14 @@ const closeModal = () => {
 .light-theme .selector-modal-header { border-bottom-color: #e0e0e0; }
 .light-theme .close-button { color: #888; }
 .light-theme .close-button:hover { color: #000; }
-.light-theme .select-button {
+.light-theme .select-button, .light-theme .sub-option-button {
   background-color: #f0f0f0;
   border: 1px solid #ccc;
   color: #333;
 }
-.light-theme .select-button:hover { background-color: #e0e0e0; }
+.light-theme .select-button:hover, .light-theme .sub-option-button:hover { 
+  background-color: #e0e0e0; 
+}
 
 .dark-theme {
   background-color: #3a3a3a;
@@ -142,11 +186,12 @@ const closeModal = () => {
 .dark-theme .selector-modal-header { border-bottom-color: #555; }
 .dark-theme .close-button { color: #bbb; }
 .dark-theme .close-button:hover { color: #fff; }
-.dark-theme .select-button {
+.dark-theme .select-button, .dark-theme .sub-option-button {
   background-color: #4f4f4f;
   border: 1px solid #666;
   color: #e0e0e0;
 }
-
-.dark-theme .select-button:hover { background-color: #5a5a5a; }
+.dark-theme .select-button:hover, .dark-theme .sub-option-button:hover { 
+  background-color: #5a5a5a; 
+}
 </style>
