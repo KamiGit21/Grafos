@@ -134,7 +134,7 @@ const efMap = computed(() => {
   topoOrder.value.forEach(node => {
     const nodeEf = ef.get(node.id);
     
-    // Actualizar los sucesores
+    // Actualizar los sucesores (tomando el mínimo)
     props.edges.filter(e => e.from === node.id).forEach(edge => {
       const weight = Number(edge.value) || 0;
       const newEf = nodeEf + weight;
@@ -159,28 +159,32 @@ const outDegrees = computed(() => {
 
 const reverseTopo = computed(() => topoOrder.value.length > 0 ? [...topoOrder.value].reverse() : []);
 
-// Para minimización: Late Finish (LF) - tiempo más tardío de finalización
+// Para minimización: Late Finish (LF) - tiempo más tardío de finalización (usando el mayor valor posible)
 const lfMap = computed(() => {
   if (topoOrder.value.length === 0) return new Map();
-  const lf = new Map(props.nodes.map(n => [n.id, Number.POSITIVE_INFINITY]));
+  const lf = new Map(props.nodes.map(n => [n.id, Number.NEGATIVE_INFINITY]));
   
-  // Para nodos sumidero (sin sucesores), LF = EF
-  props.nodes.forEach(node => {
-    if (outDegrees.value[node.id] === 0) {
-      lf.set(node.id, efMap.value.get(node.id) || 0);
-    }
+  // Para nodos sumidero (sin sucesores), LF = EF (pero usando el mayor valor posible entre todos los sumideros)
+  const sinkNodes = props.nodes.filter(n => outDegrees.value[n.id] === 0);
+  const maxEfSink = Math.max(...sinkNodes.map(n => efMap.value.get(n.id) || 0));
+  
+  sinkNodes.forEach(node => {
+    // Usar el mayor EF entre todos los sumideros como LF para cada sumidero
+    lf.set(node.id, maxEfSink);
   });
   
-  // Procesar en orden topológico inverso
+  // Procesar en orden topológico inverso (tomando el máximo)
   reverseTopo.value.forEach(node => {
     const nodeLf = lf.get(node.id);
     
-    // Actualizar predecesores
+    // Actualizar predecesores (tomando el máximo)
     props.edges.filter(e => e.to === node.id).forEach(edge => {
       const weight = Number(edge.value) || 0;
       const newLf = nodeLf - weight;
       const currentLf = lf.get(edge.from);
-      if (newLf < currentLf) {
+      
+      // Tomar el mayor valor posible
+      if (newLf > currentLf) {
         lf.set(edge.from, newLf);
       }
     });
@@ -267,8 +271,9 @@ const augmentedEdges = computed(() => {
 const projectDuration = computed(() => {
   if (props.nodes.length === 0) return 0;
   
-  // La duración del proyecto es el máximo EF entre todos los nodos
-  const maxEf = Math.max(...props.nodes.map(n => efMap.value.get(n.id) || 0));
+  // La duración del proyecto es el máximo EF entre todos los nodos sumidero
+  const sinkNodes = props.nodes.filter(n => outDegrees.value[n.id] === 0);
+  const maxEf = sinkNodes.length > 0 ? Math.max(...sinkNodes.map(n => efMap.value.get(n.id) || 0)) : 0;
   return isFinite(maxEf) ? maxEf : 0;
 });
 
