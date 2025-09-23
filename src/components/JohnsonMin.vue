@@ -9,7 +9,8 @@
       <main class="johnson-modal-body" v-if="augmentedNodes.length > 0 && topoOrder.length > 0">
         <div class="info-panel">
           <p><strong>Duración mínima del proyecto:</strong> {{ Math.round(projectDuration) }}</p>
-          <p><strong>Camino mínimo:</strong> {{ minPath }}</p>
+          <p><strong>Camino mínimo:</strong> {{ minPath.join(' → ') }}</p>
+          <p><strong>Nodos en camino mínimo:</strong> {{ minPathNodes.join(', ') }}</p>
           <p v-if="hasCycles">¡Advertencia! El grafo tiene ciclos. Los resultados pueden ser inexactos.</p>
         </div>
         <svg class="graph-svg" ref="graphSvgJohnson" @wheel.prevent="handleWheel" @mousedown.self="startPan" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag">
@@ -27,7 +28,7 @@
                 stroke-width="2"
                 fill="none"
                 :marker-end="'url(#arrow)'"
-                :class="{ 'min-path': edge.slack === 0 }"
+                :class="{ 'min-path': edge.isInMinPath }"
               />
               <text
                 :x="edge.textX"
@@ -49,7 +50,7 @@
 
             <g v-for="node in augmentedNodes" :key="node.id"  
               :transform="`translate(${node.x}, ${node.y})`"
-              :class="['node-group', node.shape, { 'min-path-node': node.slack === 0 }]">
+              :class="['node-group', node.shape, { 'min-path-node': node.isInMinPath }]">
               <circle v-if="node.shape === 'circle'" :r="getNodeRadius(node)" :fill="node.color" :stroke="node.borderColor" stroke-width="2"/>
               <ellipse v-else :rx="getNodeEllipseRx(node)" ry="25" :fill="node.color" :stroke="node.borderColor" stroke-width="2"/>
               <text class="node-label" text-anchor="middle" y="-20">{{ node.label }}</text>
@@ -125,27 +126,25 @@ const topoOrder = computed(() => {
 
 const hasCycles = computed(() => topoOrder.value.length < props.nodes.length);
 
-// Para minimización: Early Finish (EF) y Late Finish (LF)
+// Para minimización: Early Finish (EF) - tiempo más temprano de finalización
 const efMap = computed(() => {
   if (topoOrder.value.length === 0) return new Map();
   const ef = new Map(props.nodes.map(n => [n.id, inDegrees.value[n.id] === 0 ? 0 : Number.POSITIVE_INFINITY]));
+  
   topoOrder.value.forEach(node => {
-    const incomingEdges = props.edges.filter(e => e.to === node.id);
-    if (incomingEdges.length === 0) {
-      ef.set(node.id, 0); // Nodo inicial
-    } else {
-      let minEf = Number.POSITIVE_INFINITY;
-      incomingEdges.forEach(edge => {
-        const weight = Number(edge.value) || 0;
-        const predEf = ef.get(edge.from) || 0;
-        const candidateEf = predEf + weight;
-        if (candidateEf < minEf) {
-          minEf = candidateEf;
-        }
-      });
-      ef.set(node.id, minEf);
-    }
+    const nodeEf = ef.get(node.id);
+    
+    // Actualizar los sucesores
+    props.edges.filter(e => e.from === node.id).forEach(edge => {
+      const weight = Number(edge.value) || 0;
+      const newEf = nodeEf + weight;
+      const currentEf = ef.get(edge.to);
+      if (newEf < currentEf) {
+        ef.set(edge.to, newEf);
+      }
+    });
   });
+  
   return ef;
 });
 
@@ -160,95 +159,117 @@ const outDegrees = computed(() => {
 
 const reverseTopo = computed(() => topoOrder.value.length > 0 ? [...topoOrder.value].reverse() : []);
 
+// Para minimización: Late Finish (LF) - tiempo más tardío de finalización
 const lfMap = computed(() => {
   if (topoOrder.value.length === 0) return new Map();
   const lf = new Map(props.nodes.map(n => [n.id, Number.POSITIVE_INFINITY]));
-  const sinks = props.nodes.filter(n => outDegrees.value[n.id] === 0);
-  sinks.forEach(sink => lf.set(sink.id, efMap.value.get(sink.id) || 0));
   
-  reverseTopo.value.forEach(node => {
-    const outgoingEdges = props.edges.filter(e => e.from === node.id);
-    if (outgoingEdges.length === 0) {
-      // Es un nodo sumidero, ya tiene LF asignado
-    } else {
-      let minLf = Number.POSITIVE_INFINITY;
-      outgoingEdges.forEach(edge => {
-        const weight = Number(edge.value) || 0;
-        const succLf = lf.get(edge.to) || 0;
-        const candidateLf = succLf - weight;
-        if (candidateLf < minLf) {
-          minLf = candidateLf;
-        }
-      });
-      if (minLf < (lf.get(node.id) || Number.POSITIVE_INFINITY)) {
-        lf.set(node.id, minLf);
-      }
+  // Para nodos sumidero (sin sucesores), LF = EF
+  props.nodes.forEach(node => {
+    if (outDegrees.value[node.id] === 0) {
+      lf.set(node.id, efMap.value.get(node.id) || 0);
     }
   });
+  
+  // Procesar en orden topológico inverso
+  reverseTopo.value.forEach(node => {
+    const nodeLf = lf.get(node.id);
+    
+    // Actualizar predecesores
+    props.edges.filter(e => e.to === node.id).forEach(edge => {
+      const weight = Number(edge.value) || 0;
+      const newLf = nodeLf - weight;
+      const currentLf = lf.get(edge.from);
+      if (newLf < currentLf) {
+        lf.set(edge.from, newLf);
+      }
+    });
+  });
+  
   return lf;
 });
 
+// Encontrar el camino mínimo (secuencia de nodos con holgura cero)
+const minPath = computed(() => {
+  if (topoOrder.value.length === 0 || hasCycles.value) return [];
+  
+  const path = [];
+  const visited = new Set();
+  
+  // Encontrar nodos iniciales (sin predecesores)
+  const startNodes = props.nodes.filter(n => inDegrees.value[n.id] === 0);
+  if (startNodes.length === 0) return [];
+  
+  // Función recursiva para encontrar el camino mínimo
+  const findMinPath = (node) => {
+    if (visited.has(node.id)) return;
+    visited.add(node.id);
+    
+    path.push(node.label);
+    
+    // Encontrar sucesores con holgura cero
+    const outgoingEdges = props.edges.filter(e => e.from === node.id);
+    const zeroSlackEdges = outgoingEdges.filter(edge => {
+      const edgeSlack = (lfMap.value.get(edge.to) || 0) - (efMap.value.get(edge.from) || 0) - (Number(edge.value) || 0);
+      return Math.abs(edgeSlack) < 0.001; // Considerar cero con tolerancia
+    });
+    
+    if (zeroSlackEdges.length > 0) {
+      // Seguir por la primera arista con holgura cero
+      const nextEdge = zeroSlackEdges[0];
+      const nextNode = props.nodes.find(n => n.id === nextEdge.to);
+      if (nextNode) {
+        findMinPath(nextNode);
+      }
+    }
+  };
+  
+  // Empezar desde el primer nodo inicial
+  findMinPath(startNodes[0]);
+  
+  return path;
+});
+
+const minPathNodes = computed(() => {
+  return minPath.value;
+});
+
 const augmentedNodes = computed(() => {
-  return props.nodes.map(n => ({
-    ...n,
-    ef: efMap.value.get(n.id) || 0,
-    lf: lfMap.value.get(n.id) || 0,
-    slack: (lfMap.value.get(n.id) || 0) - (efMap.value.get(n.id) || 0)
-  }));
+  return props.nodes.map(n => {
+    const ef = efMap.value.get(n.id) || 0;
+    const lf = lfMap.value.get(n.id) || 0;
+    const slack = lf - ef;
+    const isInMinPath = minPath.value.includes(n.label);
+    
+    return {
+      ...n,
+      ef,
+      lf,
+      slack,
+      isInMinPath
+    };
+  });
 });
 
 const augmentedEdges = computed(() => {
-  return props.edges.map(e => ({
-    ...e,
-    slack: (lfMap.value.get(e.to) || 0) - (efMap.value.get(e.from) || 0) - (Number(e.value) || 0)
-  }));
+  return props.edges.map(e => {
+    const slack = (lfMap.value.get(e.to) || 0) - (efMap.value.get(e.from) || 0) - (Number(e.value) || 0);
+    const isInMinPath = Math.abs(slack) < 0.001; // Considerar cero con tolerancia
+    
+    return {
+      ...e,
+      slack,
+      isInMinPath
+    };
+  });
 });
 
 const projectDuration = computed(() => {
+  if (props.nodes.length === 0) return 0;
+  
+  // La duración del proyecto es el máximo EF entre todos los nodos
   const maxEf = Math.max(...props.nodes.map(n => efMap.value.get(n.id) || 0));
   return isFinite(maxEf) ? maxEf : 0;
-});
-
-const minPath = computed(() => {
-  if (topoOrder.value.length === 0 || hasCycles.value) return 'Grafo inválido (ciclos detectados)';
-  
-  // Encontrar el nodo con menor EF (puede ser el inicio)
-  let minNode = props.nodes[0];
-  props.nodes.forEach(n => {
-    const efN = efMap.value.get(n.id) || 0;
-    const efMin = efMap.value.get(minNode.id) || 0;
-    if (efN < efMin) minNode = n;
-  });
-
-  // Reconstruir el camino mínimo desde el nodo con menor EF
-  const path = [minNode.label];
-  let current = minNode;
-  
-  while (true) {
-    const outgoingEdges = props.edges.filter(e => e.from === current.id);
-    if (outgoingEdges.length === 0) break;
-    
-    let nextEdge = null;
-    let minSlack = Number.POSITIVE_INFINITY;
-    
-    outgoingEdges.forEach(edge => {
-      const slack = augmentedEdges.value.find(e => e.id === edge.id)?.slack || 0;
-      if (slack < minSlack) {
-        minSlack = slack;
-        nextEdge = edge;
-      }
-    });
-    
-    if (!nextEdge || minSlack > 0) break;
-    
-    const nextNode = props.nodes.find(n => n.id === nextEdge.to);
-    if (!nextNode) break;
-    
-    path.push(nextNode.label);
-    current = nextNode;
-  }
-  
-  return path.join(' → ');
 });
 
 const nodeMap = computed(() => new Map(augmentedNodes.value.map(node => [node.id, node])));
