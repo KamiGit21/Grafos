@@ -1,3 +1,4 @@
+<!-- App.vue -->
 <template>
   <div :class="['graph-editor-container', currentTheme]" style="margin-top: 120px;">
     <Navbar :theme="currentTheme" /> <!-- Navbar fijo en la parte superior -->
@@ -13,14 +14,18 @@
           <input type="file" ref="importFileInput" @change="importJSON" accept=".json" style="display: none;" />
           <button @click="changeStyle">Cambiar Estilo</button>
           <div class="background-selector">
-            <button @click="setCanvasBackground('grid')" :class="{ 'active': canvasBackgroundStyle === 'grid' }" title="Fondo de Cuadrícula">▦</button>
-            <button @click="setCanvasBackground('dots')" :class="{ 'active': canvasBackgroundStyle === 'dots' }" title="Fondo de Puntos">⠶</button>
-            <button @click="setCanvasBackground('blank')" :class="{ 'active': canvasBackgroundStyle === 'blank' }" title="Fondo Blanco">∅</button>
+            <button @click="setCanvasBackground('grid')" :class="{ 'active': canvasBackgroundStyle === 'grid' }"
+              title="Fondo de Cuadrícula">▦</button>
+            <button @click="setCanvasBackground('dots')" :class="{ 'active': canvasBackgroundStyle === 'dots' }"
+              title="Fondo de Puntos">⠶</button>
+            <button @click="setCanvasBackground('blank')" :class="{ 'active': canvasBackgroundStyle === 'blank' }"
+              title="Fondo Blanco">∅</button>
             <label class="color-picker-label" title="Color de Fondo">
               <input type="color" v-model="canvasBackgroundColor" />
             </label>
           </div>
-          <button @click="toggleZoomMode" :class="{ 'active': isZoomEnabled }" title="Activar/Desactivar Zoom">🔍</button>
+          <button @click="toggleZoomMode" :class="{ 'active': isZoomEnabled }"
+            title="Activar/Desactivar Zoom">🔍</button>
         </nav>
       </div>
     </header>
@@ -28,96 +33,79 @@
     <main class="main-content">
       <aside class="sidebar-left">
         <div class="tool-group">
-          <button @click="toggleNodeMode('circle')" :class="{ 'active': isAddingNode && nodeShape === 'circle' }" title="Añadir Nodo Círculo">
+          <button @click="toggleNodeMode('circle')" :class="{ 'active': isAddingNode && nodeShape === 'circle' }"
+            title="Añadir Nodo Círculo">
             ⚪
           </button>
-          <button @click="toggleNodeMode('oval')" :class="{ 'active': isAddingNode && nodeShape === 'oval' }" title="Añadir Nodo Óvalo">
+          <button @click="toggleNodeMode('oval')" :class="{ 'active': isAddingNode && nodeShape === 'oval' }"
+            title="Añadir Nodo Óvalo">
             🥚
           </button>
         </div>
-        
+
         <button @click="toggleEdgeMode" :class="{ 'active': isAddingEdge }" title="Añadir Arista">↔️</button>
         <button @click="toggleEraserMode" :class="{ 'active': isEraserActive }" title="Borrador">🧽</button>
         <button @click="toggleMatrixView" :class="{ 'active': showMatrix }" title="Ver Matriz">📊</button>
-        
+
         <button @click="clearCanvas" title="Borrar todo">🗑️</button>
       </aside>
 
       <section class="canvas-area">
-        <svg class="graph-svg" :style="svgBackgroundStyles" @click.self="handleCanvasClick" ref="graphSvg" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag" @wheel.prevent="handleWheel" @mousedown.self="startPan">
+        <svg class="graph-svg" :style="svgBackgroundStyles" @click.self="handleCanvasClick" ref="graphSvg"
+          @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag" @wheel.prevent="handleWheel"
+          @mousedown.self="startPan">
           <g :transform="`translate(${panX}, ${panY}) scale(${zoomLevel})`">
             <defs>
-              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" :fill="currentTheme === 'light-theme' ? '#555' : '#ccc'"></path>
               </marker>
             </defs>
 
             <g v-for="edge in edgesWithCoords" :key="edge.id">
               <!-- Transparent path for increased click sensitivity -->
-              <path
-                :d="edge.pathData"
-                stroke="transparent"
-                stroke-width="10"
-                fill="none"
-                style="pointer-events: visibleStroke;"
-                @click.stop="selectElement(edge)"
-              />
+              <path :d="edge.pathData" stroke="transparent" stroke-width="10" fill="none"
+                style="pointer-events: visibleStroke;" @click.stop="selectElement(edge)" />
               <!-- Visible path for rendering -->
-              <path
-                :d="edge.pathData"
-                :stroke="edge.color"
-                :stroke-width="edge.strokeWidth"
-                :stroke-dasharray="edge.strokeDasharray"
-                fill="none"
-                :marker-end="edge.directed ? 'url(#arrow)' : null"
+              <path :d="edge.pathData" :stroke="edge.color" :stroke-width="edge.strokeWidth"
+                :stroke-dasharray="edge.strokeDasharray" fill="none" :marker-end="edge.directed ? 'url(#arrow)' : null"
                 style="pointer-events: none;"
-                :class="{ 'selected': selectedElement && selectedElement.id === edge.id }"
-              />
-              <text
-                :x="edge.textX"
-                :y="edge.textY"
-                text-anchor="middle"
-                class="edge-label"
+                :class="{ 'selected': selectedElement && selectedElement.id === edge.id }" />
+              <text :x="edge.textX" :y="edge.textY" text-anchor="middle" class="edge-label"
                 @click.stop="selectElement(edge)">
                 {{ edge.value }}
               </text>
             </g>
 
-            <g v-for="node in nodes" :key="node.id"  
-              :transform="`translate(${node.x}, ${node.y})`"
-              @mousedown.stop="startDrag(node, $event)"
-              @click.stop="handleNodeClick(node)"
+            <g v-for="node in nodes" :key="node.id" :transform="`translate(${node.x}, ${node.y})`"
+              @mousedown.stop="startDrag(node, $event)" @click.stop="handleNodeClick(node)"
               :class="['node-group', node.shape, { 'selected': selectedElement && selectedElement.id === node.id || edgeStartNode?.id === node.id }]">
-              <circle v-if="node.shape === 'circle'" :r="getNodeRadius(node)" :fill="node.color" :stroke="node.borderColor" stroke-width="2"/>
-              <ellipse v-else :rx="getNodeEllipseRx(node)" ry="25" :fill="node.color" :stroke="node.borderColor" stroke-width="2"/>
+              <circle v-if="node.shape === 'circle'" :r="getNodeRadius(node)" :fill="node.color"
+                :stroke="node.borderColor" stroke-width="2" />
+              <ellipse v-else :rx="getNodeEllipseRx(node)" ry="25" :fill="node.color" :stroke="node.borderColor"
+                stroke-width="2" />
               <text class="node-label">{{ node.label }}</text>
             </g>
-            
+
             <g v-if="selectedElementHandlePos.visible">
-              <circle 
-                :cx="selectedElementHandlePos.x" 
-                :cy="selectedElementHandlePos.y" 
-                r="8" 
-                class="manipulation-handle"
-                @mousedown.stop="startHandleDrag"
-              />
+              <circle :cx="selectedElementHandlePos.x" :cy="selectedElementHandlePos.y" r="8"
+                class="manipulation-handle" @mousedown.stop="startHandleDrag" />
             </g>
 
-            <g v-if="flipButtonPosition.visible" 
+            <g v-if="flipButtonPosition.visible"
               :transform="`translate(${flipButtonPosition.x}, ${flipButtonPosition.y})`"
-              @click.stop="flipSelectedEdgeDirection" 
-              class="flip-handle">
-              <circle r="10" class="flip-handle-bg"/>
-              <path d="M 0 -4 A 4 4 0 1 1 -4 0 M -4 0 L -7 -3 M -4 0 L -1 -3" class="flip-handle-icon"/>
+              @click.stop="flipSelectedEdgeDirection" class="flip-handle">
+              <circle r="10" class="flip-handle-bg" />
+              <path d="M 0 -4 A 4 4 0 1 1 -4 0 M -4 0 L -7 -3 M -4 0 L -1 -3" class="flip-handle-icon" />
             </g>
           </g>
         </svg>
 
-        <div v-if="selectedElement?.type === 'node' && isEditing"
-            class="edit-box"
-            :style="{ left: `${(selectedElement.x + panX) * zoomLevel}px`, top: `${(selectedElement.y + panY) * zoomLevel}px` }"
-            @mousedown.stop>
-          <input type="text" v-model="selectedElement.label" placeholder="Nombre" @keyup.enter="isEditing = false" autofocus />
+        <div v-if="selectedElement?.type === 'node' && isEditing" class="edit-box"
+          :style="{ left: `${(selectedElement.x + panX) * zoomLevel}px`, top: `${(selectedElement.y + panY) * zoomLevel}px` }"
+          @mousedown.stop>
+          <input type="text" v-model="selectedElement.label" placeholder="Nombre" @keyup.enter="isEditing = false"
+            autofocus />
           <div class="color-pickers">
             <label>Relleno: <input type="color" v-model="selectedElement.color" /></label>
             <label>Borde: <input type="color" v-model="selectedElement.borderColor" /></label>
@@ -125,11 +113,10 @@
           <button @click="isEditing = false">Guardar</button>
         </div>
 
-        <div v-if="selectedElement?.type === 'edge' && isEditing"
-            class="edit-box"
-            :style="getEdgeValuePosition()"
-            @mousedown.stop>
-          <label>Valor: <input type="number" step="any" v-model.number="selectedElement.value" placeholder="Valor" @keyup.enter="isEditing = false" autofocus /></label>
+        <div v-if="selectedElement?.type === 'edge' && isEditing" class="edit-box" :style="getEdgeValuePosition()"
+          @mousedown.stop>
+          <label>Valor: <input type="number" step="any" v-model.number="selectedElement.value" placeholder="Valor"
+              @keyup.enter="isEditing = false" autofocus /></label>
           <div class="style-pickers">
             <label>Color: <input type="color" v-model="selectedElement.color" /></label>
             <label>Grosor: <input type="number" v-model="selectedElement.strokeWidth" min="1" max="10" /></label>
@@ -141,7 +128,7 @@
               <option value="2,2">Punteado</option>
             </select>
           </label>
-          
+
           <label>Dirección:
             <select @change="updateEdgeDirection($event)" class="direction-select">
               <option value="none" :selected="!selectedElement.directed">No Dirigido</option>
@@ -183,23 +170,13 @@
     </div>
 
     <!-- AlgorithmSelector button above Help button -->
-    <button @click="showSelector = true" class="help-button" title="Algoritmo de Johnson" style="bottom: 85px;">🎨</button>
+    <button @click="showSelector = true" class="help-button" title="Algoritmo de Johnson y Asignacion"
+      style="bottom: 85px;">🎨</button>
     <button @click="showHelp = true" class="help-button" title="Ayuda" style="bottom: 25px;">?</button>
 
-    <Help 
-      v-if="showHelp" 
-      :theme="currentTheme"
-      @close="showHelp = false" 
-    />
-    <AlgorithmSelector 
-      v-if="showSelector" 
-      :theme="currentTheme"
-      :nodes="nodes"
-      :edges="edges"
-      @close="showSelector = false" 
-      @update-graph="updateFromJohnson"
-      @clear-graph="clearCanvas"
-    />
+    <Help v-if="showHelp" :theme="currentTheme" @close="showHelp = false" />
+    <AlgorithmSelector v-if="showSelector" :theme="currentTheme" :nodes="nodes" :edges="edges"
+      @close="showSelector = false" @update-graph="updateFromJohnson" @clear-graph="clearCanvas" />
   </div>
 </template>
 
@@ -252,127 +229,127 @@ const edgesWithCoords = computed(() => {
     let commonProps = { ...edge };
 
     if (from.id === to.id) {
-        const nodeRadius = getNodeRadius(from);
-        const loopRadius = (edge.loopSize || 40) / 2;
-        const loopAngle = edge.loopAngle || 0;
-        const angleRad = (loopAngle - 90) * (Math.PI / 180);
+      const nodeRadius = getNodeRadius(from);
+      const loopRadius = (edge.loopSize || 40) / 2;
+      const loopAngle = edge.loopAngle || 0;
+      const angleRad = (loopAngle - 90) * (Math.PI / 180);
 
-        const tangentAngle = angleRad + Math.PI / 2;
-        const p1x = from.x + Math.cos(tangentAngle) * nodeRadius;
-        const p1y = from.y + Math.sin(tangentAngle) * nodeRadius;
-        const p2x = from.x - Math.cos(tangentAngle) * nodeRadius;
-        const p2y = from.y + Math.sin(tangentAngle) * nodeRadius;
-        
-        const controlPointX = from.x + Math.cos(angleRad) * (nodeRadius + 2 * loopRadius);
-        const controlPointY = from.y + Math.sin(angleRad) * (nodeRadius + 2 * loopRadius);
-        
-        let endPointX = p1x, endPointY = p1y;
-        if (edge.directed) {
-            const dx = p1x - controlPointX;
-            const dy = p1y - controlPointY;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            const ratio = (dist - 10) / dist;
-            endPointX = controlPointX + dx * ratio;
-            endPointY = controlPointY + dy * ratio;
-        }
+      const tangentAngle = angleRad + Math.PI / 2;
+      const p1x = from.x + Math.cos(tangentAngle) * nodeRadius;
+      const p1y = from.y + Math.sin(tangentAngle) * nodeRadius;
+      const p2x = from.x - Math.cos(tangentAngle) * nodeRadius;
+      const p2y = from.y + Math.sin(tangentAngle) * nodeRadius;
 
-        commonProps.pathData = `M ${p2x} ${p2y} A ${loopRadius} ${loopRadius} 0 1 1 ${endPointX} ${endPointY}`;
-        commonProps.controlPointX = controlPointX;
-        commonProps.controlPointY = controlPointY;
-        commonProps.textX = controlPointX;
-        commonProps.textY = controlPointY;
+      const controlPointX = from.x + Math.cos(angleRad) * (nodeRadius + 2 * loopRadius);
+      const controlPointY = from.y + Math.sin(angleRad) * (nodeRadius + 2 * loopRadius);
+
+      let endPointX = p1x, endPointY = p1y;
+      if (edge.directed) {
+        const dx = p1x - controlPointX;
+        const dy = p1y - controlPointY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const ratio = (dist - 10) / dist;
+        endPointX = controlPointX + dx * ratio;
+        endPointY = controlPointY + dy * ratio;
+      }
+
+      commonProps.pathData = `M ${p2x} ${p2y} A ${loopRadius} ${loopRadius} 0 1 1 ${endPointX} ${endPointY}`;
+      commonProps.controlPointX = controlPointX;
+      commonProps.controlPointY = controlPointY;
+      commonProps.textX = controlPointX;
+      commonProps.textY = controlPointY;
     } else {
-        const toNodeRadius = to.shape === 'circle' ? getNodeRadius(to) : 30;
-        const midX = (from.x + to.x) / 2;
-        const midY = (from.y + to.y) / 2;
+      const toNodeRadius = to.shape === 'circle' ? getNodeRadius(to) : 30;
+      const midX = (from.x + to.x) / 2;
+      const midY = (from.y + to.y) / 2;
 
-        const dx = to.x - from.x;
-        const dy = to.y - from.y;
-        const len = Math.sqrt(dx*dx + dy*dy);
-        const nx = -dy / len;
-        const ny = dx / len;
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const nx = -dy / len;
+      const ny = dx / len;
 
-        const controlPointX = midX + nx * edge.curveOffset;
-        const controlPointY = midY + ny * edge.curveOffset;
+      const controlPointX = midX + nx * edge.curveOffset;
+      const controlPointY = midY + ny * edge.curveOffset;
 
-        let endPointX = to.x;
-        let endPointY = to.y;
+      let endPointX = to.x;
+      let endPointY = to.y;
 
-        if (edge.directed) {
-            const cdx = to.x - controlPointX;
-            const cdy = to.y - controlPointY;
-            const cdist = Math.sqrt(cdx*cdx + cdy*cdy);
-            if (cdist > 0) {
-              const ratio = (cdist - toNodeRadius - 5) / cdist;
-              endPointX = controlPointX + cdx * ratio;
-              endPointY = controlPointY + cdy * ratio;
-            }
+      if (edge.directed) {
+        const cdx = to.x - controlPointX;
+        const cdy = to.y - controlPointY;
+        const cdist = Math.sqrt(cdx * cdx + cdy * cdy);
+        if (cdist > 0) {
+          const ratio = (cdist - toNodeRadius - 5) / cdist;
+          endPointX = controlPointX + cdx * ratio;
+          endPointY = controlPointY + cdy * ratio;
         }
+      }
 
-        commonProps.pathData = `M ${from.x} ${from.y} Q ${controlPointX} ${controlPointY} ${endPointX} ${endPointY}`;
-        commonProps.controlPointX = controlPointX;
-        commonProps.controlPointY = controlPointY;
-        commonProps.textX = (from.x + 2 * controlPointX + to.x) / 4;
-        commonProps.textY = (from.y + 2 * controlPointY + to.y) / 4;
+      commonProps.pathData = `M ${from.x} ${from.y} Q ${controlPointX} ${controlPointY} ${endPointX} ${endPointY}`;
+      commonProps.controlPointX = controlPointX;
+      commonProps.controlPointY = controlPointY;
+      commonProps.textX = (from.x + 2 * controlPointX + to.x) / 4;
+      commonProps.textY = (from.y + 2 * controlPointY + to.y) / 4;
     }
     return commonProps;
   }).filter(e => e !== null);
 });
 
 const selectedElementHandlePos = computed(() => {
-    if (selectedElement.value?.type === 'edge') {
-        const edgeCoords = edgesWithCoords.value.find(e => e.id === selectedElement.value.id);
-        if (edgeCoords) {
-            return {
-                visible: true,
-                x: edgeCoords.controlPointX,
-                y: edgeCoords.controlPointY,
-            };
-        }
+  if (selectedElement.value?.type === 'edge') {
+    const edgeCoords = edgesWithCoords.value.find(e => e.id === selectedElement.value.id);
+    if (edgeCoords) {
+      return {
+        visible: true,
+        x: edgeCoords.controlPointX,
+        y: edgeCoords.controlPointY,
+      };
     }
-    return { visible: false, x: 0, y: 0 };
+  }
+  return { visible: false, x: 0, y: 0 };
 });
 
 const flipButtonPosition = computed(() => {
-    if (selectedElement.value?.type === 'edge' && selectedElement.value.directed && selectedElement.value.from !== selectedElement.value.to) {
-        const edgeCoords = edgesWithCoords.value.find(e => e.id === selectedElement.value.id);
-        if (edgeCoords) {
-            const pathParts = edgeCoords.pathData.split(' ');
-            const endPointX = parseFloat(pathParts[pathParts.length - 2]);
-            const endPointY = parseFloat(pathParts[pathParts.length - 1]);
-            const controlPointX = edgeCoords.controlPointX;
-            const controlPointY = edgeCoords.controlPointY;
+  if (selectedElement.value?.type === 'edge' && selectedElement.value.directed && selectedElement.value.from !== selectedElement.value.to) {
+    const edgeCoords = edgesWithCoords.value.find(e => e.id === selectedElement.value.id);
+    if (edgeCoords) {
+      const pathParts = edgeCoords.pathData.split(' ');
+      const endPointX = parseFloat(pathParts[pathParts.length - 2]);
+      const endPointY = parseFloat(pathParts[pathParts.length - 1]);
+      const controlPointX = edgeCoords.controlPointX;
+      const controlPointY = edgeCoords.controlPointY;
 
-            const dx = endPointX - controlPointX;
-            const dy = endPointY - controlPointY;
-            const len = Math.sqrt(dx*dx + dy*dy);
-            
-            if (len === 0) return { visible: false, x: 0, y: 0 };
+      const dx = endPointX - controlPointX;
+      const dy = endPointY - controlPointY;
+      const len = Math.sqrt(dx * dx + dy * dy);
 
-            const offsetX = (dx / len) * 20;
-            const offsetY = (dy / len) * 20;
+      if (len === 0) return { visible: false, x: 0, y: 0 };
 
-            return {
-                visible: true,
-                x: endPointX + offsetX,
-                y: endPointY + offsetY,
-            };
-        }
+      const offsetX = (dx / len) * 20;
+      const offsetY = (dy / len) * 20;
+
+      return {
+        visible: true,
+        x: endPointX + offsetX,
+        y: endPointY + offsetY,
+      };
     }
-    return { visible: false, x: 0, y: 0 };
+  }
+  return { visible: false, x: 0, y: 0 };
 });
 
 const adjacencyMatrix = computed(() => {
   const matrix = Array(nodes.value.length).fill(0).map(() => Array(nodes.value.length).fill(0));
   const nodeIndexMap = new Map(nodes.value.map((node, i) => [node.id, i]));
-  
+
   for (const edge of edges.value) {
     const fromIndex = nodeIndexMap.get(edge.from);
     const toIndex = nodeIndexMap.get(edge.to);
     if (fromIndex !== undefined && toIndex !== undefined) {
       const weight = typeof edge.value === 'number' && edge.value !== '' ? edge.value : 0;
       matrix[fromIndex][toIndex] = weight;
-      
+
       if (!edge.directed) {
         matrix[toIndex][fromIndex] = weight;
       }
@@ -382,36 +359,36 @@ const adjacencyMatrix = computed(() => {
 });
 
 const svgBackgroundStyles = computed(() => {
-    const styles = {};
-    const defaultGridColor = currentTheme.value === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
-    const gridColor = canvasBackgroundStyle.value !== 'blank' ? defaultGridColor : canvasBackgroundColor.value;
-    const scaledSizeGrid = 20 * zoomLevel.value;
-    const scaledSizeDots = 15 * zoomLevel.value;
-    const posX = -panX.value * zoomLevel.value;
-    const posY = -panY.value * zoomLevel.value;
+  const styles = {};
+  const defaultGridColor = currentTheme.value === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
+  const gridColor = canvasBackgroundStyle.value !== 'blank' ? defaultGridColor : canvasBackgroundColor.value;
+  const scaledSizeGrid = 20 * zoomLevel.value;
+  const scaledSizeDots = 15 * zoomLevel.value;
+  const posX = -panX.value * zoomLevel.value;
+  const posY = -panY.value * zoomLevel.value;
 
-    switch(canvasBackgroundStyle.value) {
-        case 'grid':
-            styles.backgroundImage = `
+  switch (canvasBackgroundStyle.value) {
+    case 'grid':
+      styles.backgroundImage = `
                 linear-gradient(${gridColor} 1px, transparent 1px),
                 linear-gradient(90deg, ${gridColor} 1px, transparent 1px)
             `;
-            styles.backgroundSize = `${scaledSizeGrid}px ${scaledSizeGrid}px`;
-            styles.backgroundPosition = `${posX}px ${posY}px`;
-            styles.backgroundColor = canvasBackgroundColor.value;
-            break;
-        case 'dots':
-            styles.backgroundImage = `radial-gradient(${gridColor} 1px, transparent 1px)`;
-            styles.backgroundSize = `${scaledSizeDots}px ${scaledSizeDots}px`;
-            styles.backgroundPosition = `${posX}px ${posY}px`;
-            styles.backgroundColor = canvasBackgroundColor.value;
-            break;
-        case 'blank':
-            styles.backgroundColor = canvasBackgroundColor.value;
-            styles.backgroundImage = 'none';
-            break;
-    }
-    return styles;
+      styles.backgroundSize = `${scaledSizeGrid}px ${scaledSizeGrid}px`;
+      styles.backgroundPosition = `${posX}px ${posY}px`;
+      styles.backgroundColor = canvasBackgroundColor.value;
+      break;
+    case 'dots':
+      styles.backgroundImage = `radial-gradient(${gridColor} 1px, transparent 1px)`;
+      styles.backgroundSize = `${scaledSizeDots}px ${scaledSizeDots}px`;
+      styles.backgroundPosition = `${posX}px ${posY}px`;
+      styles.backgroundColor = canvasBackgroundColor.value;
+      break;
+    case 'blank':
+      styles.backgroundColor = canvasBackgroundColor.value;
+      styles.backgroundImage = 'none';
+      break;
+  }
+  return styles;
 });
 
 const getNodeLabel = (nodeId) => {
@@ -420,10 +397,10 @@ const getNodeLabel = (nodeId) => {
 };
 
 const flipSelectedEdgeDirection = () => {
-    if (selectedElement.value?.type === 'edge' && selectedElement.value.directed) {
-        const edge = selectedElement.value;
-        [edge.from, edge.to] = [edge.to, edge.from];
-    }
+  if (selectedElement.value?.type === 'edge' && selectedElement.value.directed) {
+    const edge = selectedElement.value;
+    [edge.from, edge.to] = [edge.to, edge.from];
+  }
 };
 
 const updateEdgeDirection = (event) => {
@@ -472,7 +449,7 @@ const deselectElement = () => {
   selectedElement.value = null;
   isEditing.value = false;
   if (!isAddingEdge.value) {
-      edgeStartNode.value = null;
+    edgeStartNode.value = null;
   }
 };
 
@@ -492,7 +469,7 @@ const handleCanvasClick = (event) => {
       id: nextNodeId++,
       x: svgX,
       y: svgY,
-      label: `N${nextNodeId-1}`,
+      label: `N${nextNodeId - 1}`,
       type: "node",
       shape: nodeShape.value,
       color: "#FFD700",
@@ -531,7 +508,7 @@ const selectElement = (elementFromCoords) => {
 
 const handleNodeClick = (node) => {
   if (draggedNode.value?.isDragging) {
-      return;
+    return;
   }
   if (isAddingEdge.value) {
     if (!edgeStartNode.value) {
@@ -563,7 +540,7 @@ const handleNodeClick = (node) => {
 
 const startDrag = (node, event) => {
   if (isEraserActive.value || isEditing.value || isAddingEdge.value || isAddingNode.value || draggedHandle.value) return;
-  
+
   draggedNode.value = {
     node,
     startX: node.x,
@@ -580,48 +557,48 @@ const onDrag = (event) => {
     const dx = (event.clientX - draggedNode.value.clickX) / zoomLevel.value;
     const dy = (event.clientY - draggedNode.value.clickY) / zoomLevel.value;
     if (!draggedNode.value.isDragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
-        draggedNode.value.isDragging = true;
+      draggedNode.value.isDragging = true;
     }
     if (draggedNode.value.isDragging) {
-        draggedNode.value.node.x = draggedNode.value.startX + dx;
-        draggedNode.value.node.y = draggedNode.value.startY + dy;
+      draggedNode.value.node.x = draggedNode.value.startX + dx;
+      draggedNode.value.node.y = draggedNode.value.startY + dy;
     }
   }
 
   if (draggedHandle.value) {
-      const svgRect = graphSvg.value.getBoundingClientRect();
-      const svgX = (event.clientX - svgRect.left) / zoomLevel.value - panX.value;
-      const svgY = (event.clientY - svgRect.top) / zoomLevel.value - panY.value;
-      
-      const edge = draggedHandle.value;
-      const node = nodeMap.value.get(edge.from);
-      
-      if (edge.from === edge.to) {
-          const nodeRadius = getNodeRadius(node);
-          const dx = svgX - node.x;
-          const dy = svgY - node.y;
-          let angle = Math.atan2(dy, dx) * (180 / Math.PI);
-          angle = (angle + 450) % 360; 
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const newLoopRadius = Math.max(10, (dist - nodeRadius));
-          edge.loopAngle = angle;
-          edge.loopSize = newLoopRadius * 2;
-      } else {
-          const fromNode = nodeMap.value.get(edge.from);
-          const toNode = nodeMap.value.get(edge.to);
-          const midX = (fromNode.x + toNode.x) / 2;
-          const midY = (fromNode.y + toNode.y) / 2;
-          const dx = toNode.x - fromNode.x;
-          const dy = toNode.y - fromNode.y;
-          const len = Math.sqrt(dx * dx + dy * dy);
-          const nx = -dy / len;
-          const ny = dx / len;
-          
-          const vecX = svgX - midX;
-          const vecY = svgY - midY;
-          
-          edge.curveOffset = vecX * nx + vecY * ny;
-      }
+    const svgRect = graphSvg.value.getBoundingClientRect();
+    const svgX = (event.clientX - svgRect.left) / zoomLevel.value - panX.value;
+    const svgY = (event.clientY - svgRect.top) / zoomLevel.value - panY.value;
+
+    const edge = draggedHandle.value;
+    const node = nodeMap.value.get(edge.from);
+
+    if (edge.from === edge.to) {
+      const nodeRadius = getNodeRadius(node);
+      const dx = svgX - node.x;
+      const dy = svgY - node.y;
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      angle = (angle + 450) % 360;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const newLoopRadius = Math.max(10, (dist - nodeRadius));
+      edge.loopAngle = angle;
+      edge.loopSize = newLoopRadius * 2;
+    } else {
+      const fromNode = nodeMap.value.get(edge.from);
+      const toNode = nodeMap.value.get(edge.to);
+      const midX = (fromNode.x + toNode.x) / 2;
+      const midY = (fromNode.y + toNode.y) / 2;
+      const dx = toNode.x - fromNode.x;
+      const dy = toNode.y - fromNode.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const nx = -dy / len;
+      const ny = dx / len;
+
+      const vecX = svgX - midX;
+      const vecY = svgY - midY;
+
+      edge.curveOffset = vecX * nx + vecY * ny;
+    }
   }
 
   if (isPanning.value && !draggedNode.value && !draggedHandle.value) {
@@ -657,11 +634,11 @@ const stopDrag = () => {
 };
 
 const startHandleDrag = () => {
-    draggedHandle.value = selectedElement.value;
+  draggedHandle.value = selectedElement.value;
 };
 
 const stopHandleDrag = () => {
-    draggedHandle.value = null;
+  draggedHandle.value = null;
 };
 
 const getNodeRadius = (node) => {
@@ -702,7 +679,7 @@ const toggleEdgeMode = () => {
   isEraserActive.value = false;
   deselectElement();
   if (!isAddingEdge.value) {
-      edgeStartNode.value = null;
+    edgeStartNode.value = null;
   }
 };
 
@@ -732,16 +709,16 @@ const clearCanvas = () => {
 };
 
 const getEdgeValuePosition = () => {
-    if (!selectedElement.value || selectedElement.value.type !== 'edge') return {};
-    const edgeWithCoords = edgesWithCoords.value.find(e => e.id === selectedElement.value.id);
-    if (edgeWithCoords) {
-      return { left: `${(edgeWithCoords.textX + panX.value) * zoomLevel.value}px`, top: `${(edgeWithCoords.textY + panY.value) * zoomLevel.value}px` };
-    }
-    return {};
+  if (!selectedElement.value || selectedElement.value.type !== 'edge') return {};
+  const edgeWithCoords = edgesWithCoords.value.find(e => e.id === selectedElement.value.id);
+  if (edgeWithCoords) {
+    return { left: `${(edgeWithCoords.textX + panX.value) * zoomLevel.value}px`, top: `${(edgeWithCoords.textY + panY.value) * zoomLevel.value}px` };
+  }
+  return {};
 };
 
 const setCanvasBackground = (style) => {
-    canvasBackgroundStyle.value = style;
+  canvasBackgroundStyle.value = style;
 };
 
 const getCanvasFromSvg = () => {
@@ -753,11 +730,11 @@ const getCanvasFromSvg = () => {
     }
 
     const clonedSvg = svgElement.cloneNode(true);
-    
+
     const svgRect = svgElement.getBoundingClientRect();
     clonedSvg.setAttribute('width', svgRect.width);
     clonedSvg.setAttribute('height', svgRect.height);
-    
+
     if (!clonedSvg.getAttribute('xmlns')) {
       clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     }
@@ -776,7 +753,7 @@ const getCanvasFromSvg = () => {
     const defaultGridColor = currentTheme.value === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
     const gridColor = canvasBackgroundStyle.value !== 'blank' ? defaultGridColor : canvasBackgroundColor.value;
     let backgroundStyle = '';
-    
+
     switch (canvasBackgroundStyle.value) {
       case 'grid':
         backgroundStyle = `
@@ -828,19 +805,19 @@ const getCanvasFromSvg = () => {
     const svgString = new XMLSerializer().serializeToString(clonedSvg);
     const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(svgBlob);
-    
+
     const img = new Image();
     img.width = svgRect.width;
     img.height = svgRect.height;
-    
+
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = svgRect.width * 2;
       canvas.height = svgRect.height * 2;
       const ctx = canvas.getContext('2d');
-      
+
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
+
       URL.revokeObjectURL(url);
       resolve(canvas);
     };
@@ -850,7 +827,7 @@ const getCanvasFromSvg = () => {
       console.error("Error al cargar el SVG como imagen.", err);
       reject(new Error("No se pudo cargar el SVG como imagen."));
     };
-    
+
     img.src = url;
   });
 };
@@ -884,13 +861,13 @@ const exportPDF = async () => {
   try {
     const canvas = await getCanvasFromSvg();
     const imgData = canvas.toDataURL('image/png');
-    
+
     const pdf = new jsPDF({
       orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
       unit: 'px',
       format: [canvas.width / 2, canvas.height / 2]
     });
-    
+
     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
     pdf.save(`${fileName.trim()}.pdf`);
   } catch (error) {
@@ -903,11 +880,11 @@ const exportJSON = () => {
   const fileName = prompt("Ingresa el nombre del archivo para guardar:", "grafo");
   if (!fileName) return;
 
-  const data = { 
-    nodes: nodes.value, 
-    edges: edges.value, 
-    nextNodeId, 
-    nextEdgeId, 
+  const data = {
+    nodes: nodes.value,
+    edges: edges.value,
+    nextNodeId,
+    nextEdgeId,
     currentTheme: currentTheme.value,
     canvasBackgroundStyle: canvasBackgroundStyle.value,
     canvasBackgroundColor: canvasBackgroundColor.value,
@@ -939,8 +916,8 @@ const importJSON = (event) => {
       const data = JSON.parse(e.target.result);
       nodes.value = data.nodes || [];
       edges.value = (data.edges || []).map(edge => ({
-          ...edge,
-          curveOffset: edge.curveOffset || 0,
+        ...edge,
+        curveOffset: edge.curveOffset || 0,
       }));
       nextNodeId = data.nextNodeId || (Math.max(0, ...nodes.value.map(n => n.id)) + 1) || 1;
       nextEdgeId = data.nextEdgeId || (Math.max(0, ...edges.value.map(e => e.id)) + 1) || 1;
