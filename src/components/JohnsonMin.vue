@@ -5,6 +5,7 @@
         <h2>Algoritmo de Johnson (Minimización)</h2>
         <button class="close-button" @click="closeModal" title="Cerrar">×</button>
       </header>
+      <!--Veremos si se puede subir esto o si no funciona en nada el git-->
       
       <main class="johnson-modal-body" v-if="augmentedNodes.length > 0 && topoOrder.length > 0">
         <div class="info-panel">
