@@ -5,12 +5,10 @@ body {
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   margin: 0;
-  padding: 20px;
   box-sizing: border-box;
 }
 
@@ -29,11 +27,6 @@ body {
 }
 
 .light-theme { background-color: rgba(247, 243, 240, 0.9); color: #333; }
-.light-theme .toolbar-top { background-color: rgba(253, 246, 236, 0.85); border-bottom-color: #e0c9b6; }
-.light-theme .toolbar-top h1 { color: #333; }
-.light-theme .toolbar-top nav button { border-color: #e0c9b6; background-color: #fff9f2; color: #333; }
-.light-theme .toolbar-top nav button:hover { background-color: #f3e8dd; }
-.light-theme .toolbar-top nav button.active { background-color: #e0c9b6; border-color: #c9b4a4; }
 .light-theme .sidebar-left { background-color: rgba(253, 246, 236, 0.85); border-right-color: #e0c9b6; }
 .light-theme .sidebar-left button { border-color: #e0c9b6; background-color: #fff9f2; }
 .light-theme .sidebar-left button:hover { background-color: #f3e8dd; }
@@ -55,11 +48,6 @@ body {
 .light-theme .edit-box button:hover { background-color: #dcdcdc; }
 
 .dark-theme { background-color: rgba(44, 44, 44, 0.9); color: #e0e0e0; }
-.dark-theme .toolbar-top { background-color: rgba(60, 60, 60, 0.85); border-bottom-color: #555; }
-.dark-theme .toolbar-top h1 { color: #f0f0f0; }
-.dark-theme .toolbar-top nav button { border-color: #555; background-color: #444; color: #e0e0e0; }
-.dark-theme .toolbar-top nav button:hover { background-color: #555; }
-.dark-theme .toolbar-top nav button.active { background-color: #555; border-color: #666; }
 .dark-theme .sidebar-left { background-color: rgba(60, 60, 60, 0.85); border-right-color: #555; }
 .dark-theme .sidebar-left button { border-color: #555; background-color: #444; }
 .dark-theme .sidebar-left button:hover { background-color: #555; }
@@ -206,12 +194,12 @@ body {
   min-width: 40px;
 }
 
-.light-theme.matrix-modal-content { background-color: #ffffff; color: #333; }
+.light-theme .matrix-modal-content { background-color: #ffffff; color: #333; }
 .light-theme .matrix-modal-header { border-bottom-color: #ddd; }
 .light-theme .matrix-modal-body th { background-color: #f2f2f2; }
 .light-theme .matrix-modal-body th, .light-theme .matrix-modal-body td { border-color: #ddd; }
 
-.dark-theme.matrix-modal-content { background-color: #3a3a3a; color: #e0e0e0; }
+.dark-theme .matrix-modal-content { background-color: #3a3a3a; color: #e0e0e0; }
 .dark-theme .matrix-modal-header { border-bottom-color: #555; }
 .dark-theme .matrix-modal-body th { background-color: #555; }
 .dark-theme .matrix-modal-body th, .dark-theme .matrix-modal-body td { border-color: #666; }
