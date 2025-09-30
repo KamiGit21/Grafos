@@ -11,7 +11,6 @@
           <button @click="exportJSON">Exportar JSON</button>
           <button @click="triggerImportJSON">Importar JSON</button>
           <input type="file" ref="importFileInput" @change="importJSON" accept=".json" style="display: none;" />
-          <button @click="changeStyle">Cambiar Estilo</button>
           <div class="background-selector">
             <button @click="setCanvasBackground('grid')" :class="{ 'active': canvasBackgroundStyle === 'grid' }"
               title="Fondo de Cuadrícula">▦</button>
