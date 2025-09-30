@@ -1,7 +1,7 @@
 <template>
-  <div :class="['graph-editor-container', currentTheme]" style="margin-top: 120px;">
-    <Navbar :theme="currentTheme"/> <!-- Navbar fijo en la parte superior -->
-
+  <Navbar :theme="currentTheme"/>
+  <div class="graph-editor-container" :class="currentTheme" style="margin-top: 120px;">
+    
     <header class="toolbar-top">
       <div class="header-content">
         <h1>Pizarra de Grafos</h1>
@@ -186,6 +186,8 @@ import Help from '../../../components/Help.vue';
 import Navbar from '../../../components/Navbar.vue';
 import AlgorithmSelector from '../../../components/AlgorithmSelector.vue';
 
+import themeManager from '../../../utils/theme-manager';
+
 const nodes = ref([]);
 const edges = ref([]);
 const selectedElement = ref(null);
@@ -193,11 +195,11 @@ const isEditing = ref(false);
 const isEraserActive = ref(false);
 const showMatrix = ref(false);
 const nodeShape = ref("circle");
-const currentTheme = ref("light-theme");
+const currentTheme = localStorage.getItem('data-theme') || 'light-theme'
 const showHelp = ref(false);
 const showSelector = ref(false);
 const canvasBackgroundStyle = ref('grid');
-const canvasBackgroundColor = ref(currentTheme.value === 'light-theme' ? '#ffffff' : '#333333');
+const canvasBackgroundColor = ref(currentTheme.valueOf === 'light-theme' ? '#ffffff' : '#333333');
 const isAddingNode = ref(false);
 const isAddingEdge = ref(false);
 const edgeStartNode = ref(null);
@@ -359,7 +361,7 @@ const adjacencyMatrix = computed(() => {
 
 const svgBackgroundStyles = computed(() => {
   const styles = {};
-  const defaultGridColor = currentTheme.value === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
+  const defaultGridColor = currentTheme.valueOf === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
   const gridColor = canvasBackgroundStyle.value !== 'blank' ? defaultGridColor : canvasBackgroundColor.value;
   const scaledSizeGrid = 20 * zoomLevel.value;
   const scaledSizeDots = 15 * zoomLevel.value;
@@ -749,7 +751,7 @@ const getCanvasFromSvg = () => {
       g.removeAttribute('transform');
     }
 
-    const defaultGridColor = currentTheme.value === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
+    const defaultGridColor = currentTheme.valueOf === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
     const gridColor = canvasBackgroundStyle.value !== 'blank' ? defaultGridColor : canvasBackgroundColor.value;
     let backgroundStyle = '';
 
@@ -938,11 +940,6 @@ const importJSON = (event) => {
   event.target.value = '';
 };
 
-const changeStyle = () => {
-  currentTheme.value = currentTheme.value === "light-theme" ? "dark-theme" : "light-theme";
-  canvasBackgroundColor.value = currentTheme.value === 'light-theme' ? '#ffffff' : '#333333';
-};
-
 const updateFromJohnson = (data) => {
   nodes.value = data.nodes;
   edges.value = data.edges;
@@ -951,3 +948,225 @@ const updateFromJohnson = (data) => {
   // No actualizamos theme, background, etc., a menos que se incluya en data
 };
 </script>
+
+<style scoped>
+.graph-editor-container {
+  width: 90vw;
+  max-width: 1600px;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Oswald', sans-serif;
+  transition: background-color 0.3s;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.light-theme .graph-editor-container{ background-color: rgba(247, 243, 240, 1); color: #333; }
+.light-theme .sidebar-left { background-color: rgba(253, 246, 236, 0.85); border-right-color: #e0c9b6; }
+.light-theme .sidebar-left button { border-color: #e0c9b6; background-color: #fff9f2; }
+.light-theme .sidebar-left button:hover { background-color: #f3e8dd; }
+.light-theme .sidebar-left button.active { background-color: #e0c9b6; border-color: #c9b4a4; }
+.light-theme .canvas-area { background-color: transparent; }
+.light-theme .graph-svg { border-color: #dcdcdc; }
+.light-theme .node-label, .light-theme .edge-label { fill: #333; }
+.light-theme .manipulation-handle { fill: rgba(0, 120, 255, 0.7); stroke: #fff; }
+.light-theme .flip-handle-bg { fill: #f0f0f0; stroke: #888; }
+.light-theme .flip-handle-icon { stroke: #333; }
+.light-theme .background-selector { border-color: #e0c9b6; }
+.light-theme .background-selector button.active { background-color: #e0c9b6; }
+.light-theme .color-picker-label input[type="color"] { border: 1px solid #e0c9b6; }
+.light-theme .close-button { color: #888; }
+.light-theme .close-button:hover { color: #000; }
+.light-theme .edit-box { background-color: rgba(255, 255, 255, 0.95); border-color: #ccc; }
+.light-theme .edit-box input, .light-theme .edit-box select { border-color: #ccc; }
+.light-theme .edit-box button { background-color: #e9e9e9; }
+.light-theme .edit-box button:hover { background-color: #dcdcdc; }
+
+.dark-theme .graph-editor-container{ background-color: rgba(44, 44, 44, 1); color: #e0e0e0; }
+.dark-theme .sidebar-left { background-color: rgba(60, 60, 60, 0.85); border-right-color: #555; }
+.dark-theme .sidebar-left button { border-color: #555; background-color: #444; }
+.dark-theme .sidebar-left button:hover { background-color: #555; }
+.dark-theme .sidebar-left button.active { background-color: #555; border-color: #666; }
+.dark-theme .canvas-area { background-color: transparent; }
+.dark-theme .graph-svg { border-color: #555555; }
+.dark-theme .node-label, .dark-theme .edge-label { fill: #e0e0e0; }
+.dark-theme .manipulation-handle { fill: rgba(30, 144, 255, 0.7); stroke: #333; }
+.dark-theme .flip-handle-bg { fill: #444; stroke: #aaa; }
+.dark-theme .flip-handle-icon { stroke: #ddd; }
+.dark-theme .background-selector { border-color: #555; }
+.dark-theme .background-selector button.active { background-color: #555; }
+.dark-theme .color-picker-label input[type="color"] { border: 1px solid #666; }
+.dark-theme .close-button { color: #bbb; }
+.dark-theme .close-button:hover { color: #fff; }
+.dark-theme .edit-box { background-color: rgba(50, 50, 50, 0.95); border-color: #666; color: #e0e0e0; }
+.dark-theme .edit-box label { color: #e0e0e0; }
+.dark-theme .edit-box input, .dark-theme .edit-box select { border-color: #666; background-color: #444; color: #e0e0e0; }
+.dark-theme .edit-box button { background-color: #555; color: #e0e0e0; }
+.dark-theme .edit-box button:hover { background-color: #666; }
+
+.toolbar-top { display: flex; justify-content: center; align-items: center; padding: 10px 20px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); flex-direction: column; gap: 10px; flex-shrink: 0; }
+.toolbar-top h1 { margin: 0 0 15px 0; font-size: 1.8rem; font-weight: bold; text-align: center; }
+.toolbar-top nav { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; }
+.toolbar-top nav button { padding: 8px 12px; border-radius: 5px; cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
+.toolbar-top nav .background-selector { display: flex; gap: 8px; align-items: center; padding: 5px; border: 1px solid; border-radius: 5px; }
+.toolbar-top nav .color-picker-label { display: flex; align-items: center; }
+.toolbar-top nav .color-picker-label input[type="color"] { width: 30px; height: 30px; padding: 0; cursor: pointer; }
+.main-content { display: flex; flex: 1; overflow: hidden; }
+.sidebar-left { width: 60px; padding: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 15px; flex-shrink: 0; }
+.sidebar-left button { width: 45px; height: 45px; border-radius: 8px; font-size: 1.5rem; cursor: pointer; transition: transform 0.2s, background-color 0.2s; display: flex; justify-content: center; align-items: center; }
+.sidebar-left button:hover { transform: translateY(-2px); }
+.canvas-area { flex: 1; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px; }
+.graph-svg { width: 100%; height: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; border-width: 1px; border-style: solid; user-select: none; }
+.node-group { cursor: grab; transition: filter 0.2s; }
+.node-group:hover { filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5)); }
+
+.node-label {
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none; 
+  user-select: none; 
+}
+
+.edit-box {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+.edit-box label, .edit-box .color-pickers, .edit-box .style-pickers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.edit-box input, .edit-box select {
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+.edit-box input[type="color"] {
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  border: none;
+}
+.edit-box button {
+  align-self: flex-end;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 5px;
+}
+
+.matrix-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.matrix-modal-content {
+  max-width: 80%;
+  max-height: 80%;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.matrix-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid;
+  flex-shrink: 0;
+}
+
+.matrix-modal-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.matrix-modal-body {
+  padding: 20px;
+  overflow: auto; 
+}
+
+.matrix-modal-body table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.matrix-modal-body th, .matrix-modal-body td {
+  border: 1px solid;
+  padding: 8px;
+  text-align: center;
+  min-width: 40px;
+}
+
+.light-theme .matrix-modal-content { background-color: #ffffff; color: #333; }
+.light-theme .matrix-modal-header { border-bottom-color: #ddd; }
+.light-theme .matrix-modal-body th { background-color: #f2f2f2; }
+.light-theme .matrix-modal-body th, .light-theme .matrix-modal-body td { border-color: #ddd; }
+
+.dark-theme .matrix-modal-content { background-color: #3a3a3a; color: #e0e0e0; }
+.dark-theme .matrix-modal-header { border-bottom-color: #555; }
+.dark-theme .matrix-modal-body th { background-color: #555; }
+.dark-theme .matrix-modal-body th, .dark-theme .matrix-modal-body td { border-color: #666; }
+
+.help-button {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #c59cf8;
+  color: white;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 999;
+  transition: transform 0.2s ease-in-out, background-color 0.2s;
+}
+
+.help-button:hover {
+  transform: scale(1.1);
+  background-color: #0056b3;
+}
+</style>

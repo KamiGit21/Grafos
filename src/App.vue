@@ -6,18 +6,12 @@
 </template>
 
 <script>
+import themeManager from './utils/theme-manager';
 export default {
   name: 'App',
-   mounted() {
-    // Para inicializar los temas 
-    this.initializeTheme()
-  },
-  methods: {
-    initializeTheme() {
-      const savedTheme = localStorage.getItem('theme') || 'light-theme'
-      document.documentElement.setAttribute('data-theme', savedTheme)
-      document.body.className = savedTheme === 'dark-theme' ? 'dark-theme' : 'light-theme'
-    }
+  mounted() {
+    // Inicializar el tema UNA SOLA VEZ aquí
+    themeManager.init()
   }
 }
 </script>

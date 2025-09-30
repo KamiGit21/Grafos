@@ -33,65 +33,66 @@
 </template>
 
 <script>
-import { markRaw, h } from 'vue';
+import themeManager from '../utils/theme-manager'
 
 export default {
   name: 'Navbar',
+  
   data() {
     return {
       navItems: [
-        {
-          name: 'Home',
-          route: '/',
-        },
-        {
-          name: 'Jhonson',
-          route: '/pizarra',
-        },
-        {
-          name: 'Asignación',
-          route: '/asignacion',
-        },
-        {
-          name: 'Northwest',
-          route: '/northwest',
-        },
-        {
-          name: 'Sorts',
-          route: '/sorts',
-        }
+        { name: 'Home', route: '/' },
+        { name: 'Jhonson', route: '/johnson' },
+        { name: 'Asignación', route: '/asignacion' },
+        { name: 'Northwest', route: '/northwest' },
+        { name: 'Sorts', route: '/sorts' }
       ],
       activeRoute: this.$route ? this.$route.path : '/',
-      currentTheme: 'light'
+      currentTheme: 'light-theme',
+      unsubscribe: null
     }
   },
+  
   mounted() {
-    const savedTheme = localStorage.getItem('theme') || 'light'
-    this.currentTheme = savedTheme
-    this.applyTheme(savedTheme)
+    // Obtener el tema actual del manager
+    this.currentTheme = themeManager.getTheme()
+    
+    // Suscribirse a cambios de tema
+    this.unsubscribe = themeManager.subscribe((newTheme) => {
+      this.currentTheme = newTheme
+    })
   },
+  
+  beforeUnmount() {
+    // Limpiar la suscripción cuando el componente se destruya
+    if (this.unsubscribe) {
+      this.unsubscribe()
+    }
+  },
+  
   watch: {
     '$route.path': function(newRoute) {
       this.activeRoute = newRoute
     }
   },
+  
   methods: {
     navigate(route) {
       this.$router.push(route)
       this.activeRoute = route
     },
+    
     toggleTheme() {
-      this.currentTheme = this.currentTheme === 'light-theme' ? 'dark-theme' : 'light-theme'
-      this.applyTheme(this.currentTheme)
-      localStorage.setItem('theme', this.currentTheme)
+      // Usar el theme manager para cambiar el tema
+      themeManager.toggle()
+      // No es necesario actualizar this.currentTheme aquí
+      // porque el subscribe() lo hará automáticamente
     },
-    applyTheme(theme) {
-      document.documentElement.setAttribute('data-theme', theme)
-      document.body.className = theme === 'dark-theme' ? 'dark-theme' : 'light-theme'
-    },
+    
     handleHover(event) {
       event.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'
     },
+    
     handleLeave(event) {
       event.currentTarget.style.transform = 'translateY(0) scale(1)'
     }

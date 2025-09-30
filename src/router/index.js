@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import homeRoutes from '../features/Home/routes/routes.js';
-import PizarraRoutes from '../features/Pizarra/routes/routes.js';
+import JohnsonRoutes from '../features/Johnson/routes/routes.js';
 
 const routes = [
   ...homeRoutes,
-  ...PizarraRoutes, 
+  ...JohnsonRoutes, 
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
