@@ -184,9 +184,7 @@ import { ref, computed } from "vue";
 import jsPDF from "jspdf";
 import Help from '../../../components/Help.vue';
 import Navbar from '../../../components/Navbar.vue';
-import AlgorithmSelector from '../../../components/AlgorithmSelector.vue';
-
-import themeManager from '../../../utils/theme-manager';
+import AlgorithmSelector from './AlgorithmSelector.vue';
 
 const nodes = ref([]);
 const edges = ref([]);

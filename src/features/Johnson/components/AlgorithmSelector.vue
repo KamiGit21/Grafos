@@ -1,6 +1,6 @@
 <template>
-  <div class="selector-modal-overlay" @click.self="closeModal">
-    <div :class="['selector-modal-content', theme]">
+  <div class="selector-modal-overlay" @click.self="closeModal" :class="currentTheme">
+    <div class="selector-modal-content" >
       <header class="selector-modal-header">
         <h2>Seleccionar Algoritmo</h2>
         <button class="close-button" @click="closeModal" title="Cerrar">
@@ -25,24 +25,6 @@
             </button>
           </div>
         </div>
-        <!-- Algoritmo de Asignacion, p/ mostrar opciones de Maximizar y Minimizar-->
-        <div class="algorithm-option">
-          <button
-            @click="showAsignacionOptions = !showAsignacionOptions"
-            class="select-button"
-          >
-            Algoritmo de Asignacion {{ showAsignacionOptions ? "▲" : "▼" }}
-          </button>
-          <div v-if="showAsignacionOptions" class="sub-options">
-            <button @click="selectAsignacion('max')" class="sub-option-button">
-              Maximizar
-            </button>
-            <button @click="selectAsignacion('min')" class="sub-option-button">
-              Minimizar
-            </button>
-          </div>
-        </div>
-        <button @click="selectOther" class="select-button">Otra Opción</button>
       </main>
     </div>
 
@@ -96,16 +78,9 @@ import { ref } from "vue";
 import Johnson from "./Johnson.vue";
 import JohnsonMin from "./JohnsonMin.vue";
 
-import AsignacionMax from "./AsignacionMax.vue";
-import AsignacionMin from "./AsignacionMin.vue";
-
 const emit = defineEmits(["close", "update-graph", "clear-graph"]);
 
 const props = defineProps({
-  theme: {
-    type: String,
-    default: "light-theme",
-  },
   nodes: {
     type: Array,
     required: true,
@@ -120,20 +95,10 @@ const showJohnson = ref(null);
 const showJohnsonOptions = ref(false);
 
 const showAsignacion = ref(null);
-const showAsignacionOptions = ref(false);
 
 const selectJohnson = (type) => {
   showJohnson.value = type;
   showJohnsonOptions.value = false;
-};
-
-const selectAsignacion = (type) => {
-  showAsignacion.value = type;
-  showAsignacionOptions.value = false;
-};
-
-const selectOther = () => {
-  alert("Próximamente");
 };
 
 const closeModal = () => {
@@ -247,6 +212,14 @@ const closeModal = () => {
 .light-theme .select-button:hover,
 .light-theme .sub-option-button:hover {
   background-color: #e0e0e0;
+}
+.light-theme .selector-modal-content {
+  background-color: #e0e0e0;
+}
+
+
+.dark-theme .selector-modal-content {
+  background-color: #333;
 }
 
 .dark-theme {
