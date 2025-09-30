@@ -80,6 +80,12 @@ export function useGraphInteractions(graphDataComposable) {
     if (draggedNode.value?.isDragging) {
       return;
     }
+    
+    if (isEraserActive.value) {
+      removeElement(node);
+      return;
+    }
+
     if (isAddingEdge.value) {
       if (!edgeStartNode.value) {
         edgeStartNode.value = node;

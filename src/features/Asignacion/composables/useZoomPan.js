@@ -29,6 +29,10 @@ export function useZoomPan(
     const baseStyles = {};
     const defaultGridColor = currentTheme === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
     const gridColor = canvasBackgroundStyle.value !== 'blank' ? defaultGridColor : canvasBackgroundColor.value;
+    const scaledSizeGrid = 20 * zoomLevel.value;
+    const scaledSizeDots = 15 * zoomLevel.value;
+    const posX = -panX.value * zoomLevel.value;
+    const posY = -panY.value * zoomLevel.value;
 
     switch (canvasBackgroundStyle.value) {
       case 'grid':
@@ -36,13 +40,15 @@ export function useZoomPan(
           linear-gradient(${gridColor} 1px, transparent 1px),
           linear-gradient(90deg, ${gridColor} 1px, transparent 1px)
         `;
-        baseStyles.backgroundSize = '20px 20px';
+        baseStyles.backgroundSize = `${scaledSizeGrid}px ${scaledSizeGrid}px`;
         baseStyles.backgroundColor = canvasBackgroundColor.value;
+        baseStyles.backgroundPosition = `${posX}px ${posY}px`;
         break;
       case 'dots':
         baseStyles.backgroundImage = `radial-gradient(circle, ${gridColor} 1px, transparent 1px)`;
-        baseStyles.backgroundSize = '15px 15px';
+        baseStyles.backgroundSize = `${scaledSizeDots}px ${scaledSizeDots}px`;
         baseStyles.backgroundColor = canvasBackgroundColor.value;
+        baseStyles.backgroundPosition = `${posX}px ${posY}px`;
         break;
       case 'blank':
         baseStyles.backgroundColor = canvasBackgroundColor.value;
