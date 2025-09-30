@@ -115,7 +115,7 @@ export function useGraphInteractions(graphDataComposable) {
     };
   };
 
-  const onDrag = (event, zoomLevel, panX, panY, graphSvg) => {
+  const onDrag = (event, zoomLevel, panX, panY, graphSvgRef) => {
     if (draggedNode.value) {
       const dx = (event.clientX - draggedNode.value.clickX) / zoomLevel;
       const dy = (event.clientY - draggedNode.value.clickY) / zoomLevel;
@@ -128,8 +128,9 @@ export function useGraphInteractions(graphDataComposable) {
       }
     }
 
-    if (draggedHandle.value && graphSvg.value) {
-      const svgRect = graphSvg.value.getBoundingClientRect();
+    if (draggedHandle.value && graphSvgRef) {
+      // graphSvgRef debe ser el elemento DOM del <svg>
+      const svgRect = graphSvgRef.getBoundingClientRect();
       const svgX = (event.clientX - svgRect.left) / zoomLevel - panX;
       const svgY = (event.clientY - svgRect.top) / zoomLevel - panY;
 

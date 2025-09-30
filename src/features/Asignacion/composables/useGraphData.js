@@ -147,8 +147,8 @@ export function useGraphData() {
       label: `N${nextNodeId - 1}`,
       type: 'node',
       shape,
-      color: '#46629eff',
-      borderColor: '#532491ff'
+      color: '#629eff',
+      borderColor: '#3b2881'
     };
     nodes.value.push(newNode);
     return newNode;

@@ -112,9 +112,9 @@ import { useAdjacencyMatrix } from '../composables/useAdjacencyMatrix';
 
 export default {
   name: 'Asignacion',
-    components: {
-        Navbar,
-        Toolbar,
+  components: {
+    Navbar,
+    Toolbar,
     Sidebar,
     GraphCanvas,    
     NodeEditBox,
@@ -234,7 +234,9 @@ export default {
     };
 
     const handleDrag = (event) => {
-      onDragRaw(event, zoomLevel.value, panX.value, panY.value, graphSvg);
+      // Obtener el elemento DOM del SVG correctamente
+      const svgElement = graphSvg.value?.svgElement || graphSvg.value?.$el?.querySelector('svg') || null;
+      onDragRaw(event, zoomLevel.value, panX.value, panY.value, svgElement);
       continuePan(event, hasPanned);
     };
 

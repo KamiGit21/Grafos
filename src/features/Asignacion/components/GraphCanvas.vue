@@ -1,6 +1,7 @@
 <template>
   <section class="canvas-area">
     <svg 
+      ref="svgElement"
       class="graph-svg" 
       :style="svgBackgroundStyles" 
       @click.self="$emit('canvas-click', $event)" 
@@ -118,7 +119,10 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { getNodeRadius, getNodeEllipseRx } from '../utils/graphHelpers';
+
+const svgElement = ref(null);
 
 defineProps({
   nodes: Array,
@@ -147,6 +151,11 @@ defineEmits([
   'wheel',
   'mousedown'
 ]);
+
+// Exponer el elemento SVG para que el padre pueda acceder
+defineExpose({
+  svgElement
+});
 </script>
 
 <style scoped>

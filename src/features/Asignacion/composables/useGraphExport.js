@@ -14,8 +14,19 @@ export function useGraphExport(
 ) {
   const getCanvasFromSvg = () => {
     return new Promise((resolve, reject) => {
-      const svgElement = graphSvg.value;
+      let svgElement = graphSvg.value?.svgElement;
+      
+      // Si no está disponible, intentar otras formas
       if (!svgElement) {
+        const graphSvgValue = graphSvg.value;
+        if (graphSvgValue && graphSvgValue.$el) {
+          svgElement = graphSvgValue.$el.querySelector('svg');
+        } else if (graphSvgValue && graphSvgValue.tagName === 'svg') {
+          svgElement = graphSvgValue;
+        }
+      }
+      
+      if (!svgElement || svgElement.tagName !== 'svg') {
         reject(new Error("Elemento SVG no encontrado."));
         return;
       }

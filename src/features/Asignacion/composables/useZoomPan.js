@@ -1,47 +1,55 @@
+
 import { ref, computed } from 'vue';
 
-export function useZoomPan(currentTheme, graphSvg, isAddingNode, isAddingEdge, isEraserActive, isEditing, draggedNode, draggedHandle, onDragCallback) {
+export function useZoomPan(
+  currentTheme,
+  graphSvg,
+  isAddingNode,
+  isAddingEdge,
+  isEraserActive,
+  isEditing,
+  draggedNode,
+  draggedHandle,
+  onDrag
+) {
   const isZoomEnabled = ref(false);
   const zoomLevel = ref(1);
   const panX = ref(0);
   const panY = ref(0);
-  const isPanning = ref(false);
-  const lastMousePos = ref({ x: null, y: null });
-  const panDrag = ref(null);
   const canvasBackgroundStyle = ref('grid');
-  const canvasBackgroundColor = ref(currentTheme === 'light-theme' ? '#ffffff' : '#333333');
+  const canvasBackgroundColor = ref('#ffffff');
+  
+  const isPanning = ref(false);
+  const panStartX = ref(0);
+  const panStartY = ref(0);
+  const panOffsetX = ref(0);
+  const panOffsetY = ref(0);
 
   const svgBackgroundStyles = computed(() => {
-    const styles = {};
+    const baseStyles = {};
     const defaultGridColor = currentTheme === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
     const gridColor = canvasBackgroundStyle.value !== 'blank' ? defaultGridColor : canvasBackgroundColor.value;
-    const scaledSizeGrid = 20 * zoomLevel.value;
-    const scaledSizeDots = 15 * zoomLevel.value;
-    const posX = -panX.value * zoomLevel.value;
-    const posY = -panY.value * zoomLevel.value;
 
     switch (canvasBackgroundStyle.value) {
       case 'grid':
-        styles.backgroundImage = `
+        baseStyles.backgroundImage = `
           linear-gradient(${gridColor} 1px, transparent 1px),
           linear-gradient(90deg, ${gridColor} 1px, transparent 1px)
         `;
-        styles.backgroundSize = `${scaledSizeGrid}px ${scaledSizeGrid}px`;
-        styles.backgroundPosition = `${posX}px ${posY}px`;
-        styles.backgroundColor = canvasBackgroundColor.value;
+        baseStyles.backgroundSize = '20px 20px';
+        baseStyles.backgroundColor = canvasBackgroundColor.value;
         break;
       case 'dots':
-        styles.backgroundImage = `radial-gradient(${gridColor} 1px, transparent 1px)`;
-        styles.backgroundSize = `${scaledSizeDots}px ${scaledSizeDots}px`;
-        styles.backgroundPosition = `${posX}px ${posY}px`;
-        styles.backgroundColor = canvasBackgroundColor.value;
+        baseStyles.backgroundImage = `radial-gradient(circle, ${gridColor} 1px, transparent 1px)`;
+        baseStyles.backgroundSize = '15px 15px';
+        baseStyles.backgroundColor = canvasBackgroundColor.value;
         break;
       case 'blank':
-        styles.backgroundColor = canvasBackgroundColor.value;
-        styles.backgroundImage = 'none';
+        baseStyles.backgroundColor = canvasBackgroundColor.value;
         break;
     }
-    return styles;
+
+    return baseStyles;
   });
 
   const toggleZoomMode = () => {
@@ -50,52 +58,100 @@ export function useZoomPan(currentTheme, graphSvg, isAddingNode, isAddingEdge, i
 
   const handleWheel = (event) => {
     if (!isZoomEnabled.value) return;
+    
     event.preventDefault();
-    const delta = event.deltaY < 0 ? 1.1 : 0.9;
-    zoomLevel.value = Math.max(0.3, Math.min(3, zoomLevel.value * delta));
+    
+    // Obtener el elemento SVG correctamente
+    let svgElement = graphSvg.value?.svgElement;
+    if (!svgElement) {
+      const graphSvgValue = graphSvg.value;
+      if (graphSvgValue?.$el) {
+        svgElement = graphSvgValue.$el.querySelector('svg');
+      }
+    }
+    
+    if (!svgElement) return;
+
+    const svgRect = svgElement.getBoundingClientRect();
+    const mouseX = event.clientX - svgRect.left;
+    const mouseY = event.clientY - svgRect.top;
+
+    const worldX = (mouseX - panX.value) / zoomLevel.value;
+    const worldY = (mouseY - panY.value) / zoomLevel.value;
+
+    const delta = event.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = Math.max(0.1, Math.min(5, zoomLevel.value * delta));
+
+    panX.value = mouseX - worldX * newZoom;
+    panY.value = mouseY - worldY * newZoom;
+    zoomLevel.value = newZoom;
   };
 
   const startPan = (event, hasPanned) => {
     if (isAddingNode.value || isAddingEdge.value || isEraserActive.value || isEditing.value) return;
+    if (draggedNode.value || draggedHandle.value) return;
+
+    // Obtener el elemento SVG correctamente
+    let svgElement = graphSvg.value?.svgElement;
+    if (!svgElement) {
+      const graphSvgValue = graphSvg.value;
+      if (graphSvgValue?.$el) {
+        svgElement = graphSvgValue.$el.querySelector('svg');
+      }
+    }
+    
+    if (!svgElement) return;
+
+    const svgRect = svgElement.getBoundingClientRect();
+    const clickX = event.clientX - svgRect.left;
+    const clickY = event.clientY - svgRect.top;
+
+    const tolerance = 5;
+    let clickedOnElement = false;
+
+    const allElements = svgElement.querySelectorAll('.node-group, path[stroke="transparent"]');
+    allElements.forEach((el) => {
+      const bbox = el.getBBox ? el.getBBox() : null;
+      if (bbox) {
+        const worldClickX = (clickX - panX.value) / zoomLevel.value;
+        const worldClickY = (clickY - panY.value) / zoomLevel.value;
+        if (
+          worldClickX >= bbox.x - tolerance &&
+          worldClickX <= bbox.x + bbox.width + tolerance &&
+          worldClickY >= bbox.y - tolerance &&
+          worldClickY <= bbox.y + bbox.height + tolerance
+        ) {
+          clickedOnElement = true;
+        }
+      }
+    });
+
+    if (clickedOnElement) return;
+
     isPanning.value = true;
-    const svgRect = graphSvg.value.getBoundingClientRect();
-    lastMousePos.value = {
-      x: event.clientX - svgRect.left,
-      y: event.clientY - svgRect.top
-    };
-    panDrag.value = {
-      startX: event.clientX,
-      startY: event.clientY,
-      startPanX: panX.value,
-      startPanY: panY.value
-    };
+    panStartX.value = event.clientX;
+    panStartY.value = event.clientY;
+    panOffsetX.value = panX.value;
+    panOffsetY.value = panY.value;
     hasPanned.value = false;
   };
 
   const continuePan = (event, hasPanned) => {
-    if (isPanning.value && !draggedNode.value && !draggedHandle.value && graphSvg.value) {
-      const svgRect = graphSvg.value.getBoundingClientRect();
-      const mouseX = event.clientX - svgRect.left;
-      const mouseY = event.clientY - svgRect.top;
+    if (!isPanning.value) return;
 
-      if (lastMousePos.value.x !== null && lastMousePos.value.y !== null) {
-        const dx = (mouseX - lastMousePos.value.x) / zoomLevel.value;
-        const dy = (mouseY - lastMousePos.value.y) / zoomLevel.value;
-        panX.value += dx;
-        panY.value += dy;
-        if (Math.abs(dx) > 0 || Math.abs(dy) > 0) {
-          hasPanned.value = true;
-        }
-      }
+    const dx = event.clientX - panStartX.value;
+    const dy = event.clientY - panStartY.value;
 
-      lastMousePos.value = { x: mouseX, y: mouseY };
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      hasPanned.value = true;
     }
+
+    panX.value = panOffsetX.value + dx;
+    panY.value = panOffsetY.value + dy;
   };
 
   const stopPan = () => {
     isPanning.value = false;
-    panDrag.value = null;
-    lastMousePos.value = { x: null, y: null };
   };
 
   const setCanvasBackground = (style) => {
