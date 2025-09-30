@@ -105,6 +105,27 @@ defineEmits([
   border-color: #c9b4a4;
 }
 
+.dark-theme .sidebar-left {
+  background-color: #2c2c2c;
+  border-right: 1px solid #2C2C2C;
+}
+
+.dark-theme .sidebar-left button {
+  background-color: #3A3A3A;
+  border: 1px solid #2C2C2C;
+  color: #E0E0E0;
+}
+
+.dark-theme .sidebar-left button:hover {
+  background-color: #4A4A4A;
+}
+
+.dark-theme .sidebar-left button.active {
+  background-color: #666565;
+  border-color: #1A1A1A;
+  color: #FFFFFF;
+}
+
 .tool-group {
   display: flex;
   flex-direction: column;
