@@ -1,17 +1,21 @@
 import { ref } from 'vue';
 import { getNodeRadius } from '../utils/graphHelpers';
 
-export function useGraphInteractions(
-  nodes,
-  edges,
-  selectedElement,
-  isEditing,
-  nodeShape,
-  edgesWithCoords,
-  deselectElement,
-  selectElementData,
-  removeElement
-) {
+export function useGraphInteractions(graphDataComposable) {
+  const {
+    nodes,
+    edges,
+    selectedElement,
+    isEditing,
+    nodeShape,
+    nodeMap,
+    addNode,
+    addEdge,
+    selectElement,
+    deselectElement,
+    removeElement
+  } = graphDataComposable;
+
   const isAddingNode = ref(false);
   const isAddingEdge = ref(false);
   const isEraserActive = ref(false);
@@ -45,7 +49,7 @@ export function useGraphInteractions(
     deselectElement();
   };
 
-  const handleCanvasClick = (event, zoomLevel, panX, panY, addNode) => {
+  const handleCanvasClick = (event, zoomLevel, panX, panY) => {
     if (hasPanned.value) {
       hasPanned.value = false;
       return;
@@ -58,7 +62,7 @@ export function useGraphInteractions(
       const svgY = (event.clientY - svgRect.top) / zoomLevel - panY;
 
       const newNode = addNode(svgX, svgY, nodeShape.value);
-      selectElementData(newNode);
+      selectElement(newNode);
       return;
     }
 
@@ -72,7 +76,7 @@ export function useGraphInteractions(
     }
   };
 
-  const handleNodeClick = (node, addEdge) => {
+  const handleNodeClick = (node) => {
     if (draggedNode.value?.isDragging) {
       return;
     }
@@ -82,20 +86,20 @@ export function useGraphInteractions(
       } else {
         const newEdge = addEdge(edgeStartNode.value.id, node.id);
         edgeStartNode.value = null;
-        selectElementData(newEdge);
+        selectElement(newEdge);
         isEditing.value = true;
       }
     } else {
-      selectElementData(node);
+      selectElement(node);
     }
   };
 
-  const selectElement = (elementFromCoords) => {
+  const handleElementSelect = (elementFromCoords) => {
     if (isEraserActive.value) {
       removeElement(elementFromCoords);
       return;
     }
-    selectElementData(elementFromCoords);
+    selectElement(elementFromCoords);
   };
 
   const startDrag = (node, event) => {
@@ -111,7 +115,7 @@ export function useGraphInteractions(
     };
   };
 
-  const onDrag = (event, zoomLevel, panX, panY, nodeMap, graphSvg) => {
+  const onDrag = (event, zoomLevel, panX, panY, graphSvg) => {
     if (draggedNode.value) {
       const dx = (event.clientX - draggedNode.value.clickX) / zoomLevel;
       const dy = (event.clientY - draggedNode.value.clickY) / zoomLevel;
@@ -130,7 +134,7 @@ export function useGraphInteractions(
       const svgY = (event.clientY - svgRect.top) / zoomLevel - panY;
 
       const edge = draggedHandle.value;
-      const node = nodeMap.get(edge.from);
+      const node = nodeMap.value.get(edge.from);
 
       if (edge.from === edge.to) {
         const nodeRadius = getNodeRadius(node);
@@ -143,8 +147,8 @@ export function useGraphInteractions(
         edge.loopAngle = angle;
         edge.loopSize = newLoopRadius * 2;
       } else {
-        const fromNode = nodeMap.get(edge.from);
-        const toNode = nodeMap.get(edge.to);
+        const fromNode = nodeMap.value.get(edge.from);
+        const toNode = nodeMap.value.get(edge.to);
         const midX = (fromNode.x + toNode.x) / 2;
         const midY = (fromNode.y + toNode.y) / 2;
         const dx = toNode.x - fromNode.x;
@@ -213,7 +217,7 @@ export function useGraphInteractions(
     toggleEraserMode,
     handleCanvasClick,
     handleNodeClick,
-    selectElement,
+    handleElementSelect,
     startDrag,
     onDrag,
     stopDrag,

@@ -45,14 +45,14 @@
         :is-editing="isEditing"
         @canvas-click="handleCanvasClick"
         @node-click="handleNodeClick"
-        @select-element="selectElement"
+        @select-element="handleElementSelect"
         @start-drag="startDrag"
-        @on-drag="onDrag"
-        @stop-drag="stopDrag"
+        @on-drag="handleDrag"
+        @stop-drag="handleStopDrag"
         @start-handle-drag="startHandleDrag"
         @flip-edge="flipSelectedEdgeDirection"
         @wheel="handleWheel"
-        @mousedown="startPan"
+        @mousedown="handleMouseDown"
       />
 
       <NodeEditBox
@@ -86,17 +86,6 @@
     <button @click="showHelp = true" class="help-button" title="Ayuda" style="bottom: 25px;">?</button>
 
     <Help v-if="showHelp" :theme="currentTheme" @close="showHelp = false" />
-    <!--
-    <AlgorithmSelector 
-      v-if="showSelector" 
-      :theme="currentTheme" 
-      :nodes="nodes" 
-      :edges="edges"
-      @close="showSelector = false" 
-      @update-graph="updateFromJohnson" 
-      @clear-graph="clearCanvas" 
-    />
-    -->
 
     <input type="file" ref="importFileInput" @change="importJSON" accept=".json" style="display: none;" />
   </div>
@@ -121,160 +110,11 @@ import { useGraphImport } from '../composables/useGraphImport';
 import { useZoomPan } from '../composables/useZoomPan';
 import { useAdjacencyMatrix } from '../composables/useAdjacencyMatrix';
 
-const currentTheme = localStorage.getItem('data-theme') || 'light-theme';
-const showHelp = ref(false);
-const showSelector = ref(false);
-const importFileInput = ref(null);
-const graphSvg = ref(null);
-
-// Graph data
-const {
-  nodes,
-  edges,
-  selectedElement,
-  isEditing,
-  nodeShape,
-  edgesWithCoords,
-  selectedElementHandlePos,
-  flipButtonPosition,
-  getNodeLabel,
-  selectElement: selectElementData,
-  deselectElement,
-  removeElement,
-  updateFromJohnson
-} = useGraphData();
-
-// Graph interactions
-const {
-  isAddingNode,
-  isAddingEdge,
-  isEraserActive,
-  edgeStartNode,
-  draggedNode,
-  draggedHandle,
-  hasPanned,
-  toggleNodeMode,
-  toggleEdgeMode,
-  toggleEraserMode,
-  handleCanvasClick: handleCanvasClickInteraction,
-  handleNodeClick: handleNodeClickInteraction,
-  selectElement: selectElementInteraction,
-  startDrag,
-  onDrag: onDragInteraction,
-  stopDrag,
-  startHandleDrag,
-  flipSelectedEdgeDirection,
-  updateEdgeDirection
-} = useGraphInteractions(nodes, edges, selectedElement, isEditing, nodeShape, edgesWithCoords, deselectElement, selectElementData, removeElement);
-
-// Zoom & Pan
-const {
-  isZoomEnabled,
-  zoomLevel,
-  panX,
-  panY,
-  canvasBackgroundStyle,
-  canvasBackgroundColor,
-  svgBackgroundStyles,
-  toggleZoomMode,
-  handleWheel,
-  startPan: startPanZoom,
-  continuePan,
-  stopPan,
-  setCanvasBackground
-} = useZoomPan(currentTheme, graphSvg, isAddingNode, isAddingEdge, isEraserActive, isEditing, draggedNode, draggedHandle, onDragInteraction);
-
-// Export
-const {
-  exportImage,
-  exportPDF,
-  exportJSON
-} = useGraphExport(
-  nodes, 
-  edges, 
-  graphSvg, 
-  deselectElement, 
-  currentTheme, 
-  canvasBackgroundStyle, 
-  canvasBackgroundColor, 
-  zoomLevel, 
-  panX, 
-  panY
-);
-
-// Import
-const {
-  triggerImportJSON,
-  importJSON
-} = useGraphImport(
-  importFileInput, 
-  nodes, 
-  edges, 
-  deselectElement
-);
-
-// Matrix
-const { adjacencyMatrix, showMatrix, toggleMatrixView } = useAdjacencyMatrix(nodes, edges);
-
-// Wrapper functions to connect composables
-const { addNode, addEdge } = useGraphData();
-
-const handleCanvasClick = (event) => {
-  handleCanvasClickInteraction(event, zoomLevel.value, panX.value, panY.value, addNode);
-};
-
-const handleNodeClick = (node) => {
-  handleNodeClickInteraction(node, addEdge);
-};
-
-const selectElement = (element) => {
-  selectElementInteraction(element);
-};
-
-const onDrag = (event) => {
-  onDragInteraction(event, zoomLevel.value, panX.value, panY.value, nodeMap.value, graphSvg);
-  continuePan(event, hasPanned);
-};
-
-const startPan = (event) => {
-  startPanZoom(event, hasPanned);
-};
-
-const stopDragAndPan = () => {
-  stopDrag();
-  stopPan();
-};
-
-// Clear canvas
-const clearCanvas = () => {
-  if (confirm("¿Estás seguro de que quieres borrar todo el grafo? Esta acción no se puede deshacer.")) {
-    nodes.value = [];
-    edges.value = [];
-    deselectElement();
-    zoomLevel.value = 1;
-    panX.value = 0;
-    panY.value = 0;
-    isZoomEnabled.value = false;
-  }
-};
-
-const getEdgeValuePosition = () => {
-  if (!selectedElement.value || selectedElement.value.type !== 'edge') return {};
-  const edgeWithCoords = edgesWithCoords.value.find(e => e.id === selectedElement.value.id);
-  if (edgeWithCoords) {
-    return { 
-      left: `${(edgeWithCoords.textX + panX.value) * zoomLevel.value}px`, 
-      top: `${(edgeWithCoords.textY + panY.value) * zoomLevel.value}px` 
-    };
-  }
-  return {};
-};
-
 export default {
   name: 'Asignacion',
-  components: {
-    Navbar,
-    Toolbar,
+    components: {
+        Navbar,
+        Toolbar,
     Sidebar,
     GraphCanvas,    
     NodeEditBox,
@@ -282,13 +122,217 @@ export default {
     MatrixModal,
     Help
   },
+  setup() {
+    const currentTheme = localStorage.getItem('data-theme') || 'light-theme';
+    const showHelp = ref(false);
+    const showSelector = ref(false);
+    const importFileInput = ref(null);
+    const graphSvg = ref(null);
+
+    // Graph data - composable principal
+    const graphData = useGraphData();
+    const {
+      nodes,
+      edges,
+      selectedElement,
+      isEditing,
+      nodeShape,
+      edgesWithCoords,
+      selectedElementHandlePos,
+      flipButtonPosition,
+      getNodeLabel,
+      deselectElement,
+      updateFromJohnson
+    } = graphData;
+
+    // Graph interactions - pasa el composable completo para evitar ciclos de dependencias
+    const interactions = useGraphInteractions(graphData);
+    const {
+      isAddingNode,
+      isAddingEdge,
+      isEraserActive,
+      edgeStartNode,
+      draggedNode,
+      draggedHandle,
+      hasPanned,
+      toggleNodeMode,
+      toggleEdgeMode,
+      toggleEraserMode,
+      handleCanvasClick: handleCanvasClickRaw,
+      handleNodeClick,
+      handleElementSelect,
+      startDrag,
+      onDrag: onDragRaw,
+      stopDrag,
+      startHandleDrag,
+      flipSelectedEdgeDirection,
+      updateEdgeDirection
+    } = interactions;
+
+    // Zoom & Pan
+    const {
+      isZoomEnabled,
+      zoomLevel,
+      panX,
+      panY,
+      canvasBackgroundStyle,
+      canvasBackgroundColor,
+      svgBackgroundStyles,
+      toggleZoomMode,
+      handleWheel,
+      startPan,
+      continuePan,
+      stopPan,
+      setCanvasBackground
+    } = useZoomPan(
+      currentTheme, 
+      graphSvg, 
+      isAddingNode, 
+      isAddingEdge, 
+      isEraserActive, 
+      isEditing, 
+      draggedNode, 
+      draggedHandle, 
+      onDragRaw
+    );
+
+    // Export
+    const {
+      exportImage,
+      exportPDF,
+      exportJSON
+    } = useGraphExport(
+      nodes, 
+      edges, 
+      graphSvg, 
+      deselectElement, 
+      currentTheme, 
+      canvasBackgroundStyle, 
+      canvasBackgroundColor, 
+      zoomLevel, 
+      panX, 
+      panY
+    );
+
+    // Import
+    const {
+      triggerImportJSON,
+      importJSON
+    } = useGraphImport(
+      importFileInput, 
+      nodes, 
+      edges, 
+      deselectElement
+    );
+
+    // Matrix
+    const { adjacencyMatrix, showMatrix, toggleMatrixView } = useAdjacencyMatrix(nodes, edges);
+
+    // Event handlers
+    const handleCanvasClick = (event) => {
+      handleCanvasClickRaw(event, zoomLevel.value, panX.value, panY.value);
+    };
+
+    const handleDrag = (event) => {
+      onDragRaw(event, zoomLevel.value, panX.value, panY.value, graphSvg);
+      continuePan(event, hasPanned);
+    };
+
+    const handleMouseDown = (event) => {
+      startPan(event, hasPanned);
+    };
+
+    const handleStopDrag = () => {
+      stopDrag();
+      stopPan();
+    };
+
+    // Clear canvas
+    const clearCanvas = () => {
+      if (confirm("¿Estás seguro de que quieres borrar todo el grafo? Esta acción no se puede deshacer.")) {
+        nodes.value = [];
+        edges.value = [];
+        deselectElement();
+        zoomLevel.value = 1;
+        panX.value = 0;
+        panY.value = 0;
+        isZoomEnabled.value = false;
+      }
+    };
+
+    const getEdgeValuePosition = () => {
+      if (!selectedElement.value || selectedElement.value.type !== 'edge') return {};
+      const edgeWithCoords = edgesWithCoords.value.find(e => e.id === selectedElement.value.id);
+      if (edgeWithCoords) {
+        return { 
+          left: `${(edgeWithCoords.textX + panX.value) * zoomLevel.value}px`, 
+          top: `${(edgeWithCoords.textY + panY.value) * zoomLevel.value}px` 
+        };
+      }
+      return {};
+    };
+
+    return {
+      currentTheme,
+      showHelp,
+      showSelector,
+      importFileInput,
+      graphSvg,
+      nodes,
+      edges,
+      selectedElement,
+      isEditing,
+      nodeShape,
+      edgesWithCoords,
+      selectedElementHandlePos,
+      flipButtonPosition,
+      getNodeLabel,
+      isAddingNode,
+      isAddingEdge,
+      isEraserActive,
+      edgeStartNode,
+      toggleNodeMode,
+      toggleEdgeMode,
+      toggleEraserMode,
+      handleCanvasClick,
+      handleNodeClick,
+      handleElementSelect,
+      startDrag,
+      handleDrag,
+      handleStopDrag,
+      startHandleDrag,
+      flipSelectedEdgeDirection,
+      updateEdgeDirection,
+      isZoomEnabled,
+      zoomLevel,
+      panX,
+      panY,
+      canvasBackgroundStyle,
+      canvasBackgroundColor,
+      svgBackgroundStyles,
+      toggleZoomMode,
+      handleWheel,
+      handleMouseDown,
+      setCanvasBackground,
+      exportImage,
+      exportPDF,
+      exportJSON,
+      triggerImportJSON,
+      importJSON,
+      adjacencyMatrix,
+      showMatrix,
+      toggleMatrixView,
+      clearCanvas,
+      getEdgeValuePosition,
+      updateFromJohnson
+    };
+  },
   data() {
     return {
       buildNumber: Math.floor(Math.random() * 10000)
     }
-  },
+  }
 }
-
 </script>
 
 <style scoped>

@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { getNodeRadius, getNodeEllipseRx } from '../utils/graphHelpers';
+import { getNodeRadius } from '../utils/graphHelpers';
 
 let nextNodeId = 1;
 let nextEdgeId = 1;
