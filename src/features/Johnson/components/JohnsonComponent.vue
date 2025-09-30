@@ -151,16 +151,20 @@
         </header>
         <main class="matrix-modal-body" :class="currentTheme">
           <table v-if="nodes.length > 0">
-            <tr>
-              <th></th>
-              <th v-for="n in nodes" :key="'h' + n.id">{{ n.label }}</th>
-            </tr>
-            <tr v-for="(row, rowIndex) in adjacencyMatrix" :key="'r' + nodes[rowIndex].id">
-              <th>{{ nodes[rowIndex].label }}</th>
-              <td v-for="(weight, colIndex) in row" :key="'c' + nodes[colIndex].id">
-                {{ weight }}
-              </td>
-            </tr>
+            <thead>
+              <tr>
+                <th></th>
+                <th v-for="n in nodes" :key="'h' + n.id">{{ n.label }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, rowIndex) in adjacencyMatrix" :key="'r' + nodes[rowIndex].id">
+                <th>{{ nodes[rowIndex].label }}</th>
+                <td v-for="(weight, colIndex) in row" :key="'c' + nodes[colIndex].id">
+                  {{ weight }}
+                </td>
+              </tr>
+            </tbody>
           </table>
           <p v-else>No hay nodos para mostrar en la matriz.</p>
         </main>
