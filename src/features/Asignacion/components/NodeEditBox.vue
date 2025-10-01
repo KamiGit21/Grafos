@@ -45,7 +45,7 @@ defineEmits(['close']);
   flex-direction: column;
   gap: 10px;
   align-items: flex-start;
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(255, 255, 255, 1);
   border: 1px solid #ccc;
 }
 
@@ -53,7 +53,6 @@ defineEmits(['close']);
   padding: 5px;
   border-radius: 4px;
   border: 1px solid #ccc;
-  width: 100%;
 }
 
 .color-pickers {
@@ -75,6 +74,7 @@ defineEmits(['close']);
   height: 30px;
   border: none;
   cursor: pointer;
+  font-family: 'Oswald', sans-serif;
 }
 
 .edit-box button {
@@ -84,9 +84,38 @@ defineEmits(['close']);
   border: none;
   cursor: pointer;
   background-color: #e9e9e9;
+  font-family: 'Oswald', sans-serif;
 }
 
 .edit-box button:hover {
   background-color: #dcdcdc;
 }
+
+.dark-theme .edit-box {
+  background-color: rgba(50, 50, 50, 1);
+  border: 1px solid #555;
+}
+
+.dark-theme .edit-box input[type="text"] {
+  background-color: #333;
+  color: #eee;
+  border: 1px solid #555;
+}
+
+.dark-theme .edit-box button {
+  background-color: #555;
+  color: #eee;
+}
+
+.dark-theme .edit-box button:hover {
+  background-color: #666;
+}
+
+.dark-theme .edit-box input[type="color"] {
+  border: none;
+  cursor: pointer;
+  background-color: rgba(50, 50, 50, 0.95);
+  color: #eee;
+}
+
 </style>

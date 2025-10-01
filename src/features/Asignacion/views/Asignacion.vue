@@ -82,7 +82,6 @@
       @close="toggleMatrixView"
     />
 
-    <button @click="showSelector = true" class="help-button" title="Algoritmo de Johnson y Asignacion" style="bottom: 85px;">🎨</button>
     <button @click="showHelp = true" class="help-button" title="Ayuda" style="bottom: 25px;">?</button>
 
     <Help v-if="showHelp" :theme="currentTheme" @close="showHelp = false" />
@@ -125,7 +124,6 @@ export default {
   setup() {
     const currentTheme = localStorage.getItem('data-theme') || 'light-theme';
     const showHelp = ref(false);
-    const showSelector = ref(false);
     const importFileInput = ref(null);
     const graphSvg = ref(null);
 
@@ -277,7 +275,6 @@ export default {
     return {
       currentTheme,
       showHelp,
-      showSelector,
       importFileInput,
       graphSvg,
       nodes,
@@ -342,7 +339,7 @@ export default {
 .graph-editor-container {
   width: 90vw;
   max-width: 1600px;
-  aspect-ratio: 16 / 9;
+  /* aspect-ratio: 16 / 9; */
   display: flex;
   flex-direction: column;
   font-family: 'Oswald', sans-serif;
@@ -353,6 +350,7 @@ export default {
   position: relative;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 40px;
 }
 
 .light-theme .graph-editor-container { background-color: rgba(247, 243, 240, 1); color: #333; }
@@ -366,6 +364,7 @@ export default {
 
 .help-button {
   position: fixed;
+  right: 25px;
   width: 50px;
   height: 50px;
   border-radius: 50%;
