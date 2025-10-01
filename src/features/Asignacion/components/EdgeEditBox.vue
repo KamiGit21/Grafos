@@ -35,14 +35,16 @@
     <label>
       Dirección:
       <select @change="$emit('update-direction', $event)" class="direction-select">
-        <option value="none" :selected="!edge.directed">No Dirigido</option>
-        <option value="forward" :selected="edge.directed">
+        <option value="forward" :selected="edge.directed && !isReversed()">
           {{ getNodeLabel(edge.from) }} → {{ getNodeLabel(edge.to) }}
         </option>
-        <option value="backward">
+        <option value="backward" :selected="edge.directed && isReversed()">
           {{ getNodeLabel(edge.to) }} → {{ getNodeLabel(edge.from) }}
         </option>
       </select>
+      <small style="display: block; margin-top: 5px; color: #666; font-size: 0.85em;">
+        Todas las aristas deben ser dirigidas!!
+      </small>
     </label>
     
     <button @click="$emit('close')">Guardar</button>
@@ -51,9 +53,15 @@
 
 <script setup>
 
+const props = defineProps({
+  edge: Object,
+  position: Object,
+  getNodeLabel: Function
+});
+
 const allowOnlyPositiveNumbers = (event) => {
   const key = event.key;
-  if (key === '.') { // se puede incluir ',' si el input lo permite
+  if (key === '.') {
     return;
   }
   
@@ -62,11 +70,11 @@ const allowOnlyPositiveNumbers = (event) => {
   }
 };
 
-defineProps({
-  edge: Object,
-  position: Object,
-  getNodeLabel: Function
-});
+// Helper para determinar si la arista está en dirección inversa
+const isReversed = () => {
+  // Esta función se puede mejorar según tu lógica específica
+  return false;
+};
 
 defineEmits(['close', 'update-direction']);
 </script>

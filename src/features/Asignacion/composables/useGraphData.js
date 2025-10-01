@@ -146,8 +146,8 @@ export function useGraphData() {
       label: `N-${nodes.value.length + 1}`,
       type: 'node',
       shape,
-      color: '#629eff',
-      borderColor: '#3b2881'
+      color: '#ff74a9',
+      borderColor: '#a81a39'
     };
     nodes.value.push(newNode);
     return newNode;

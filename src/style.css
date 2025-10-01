@@ -12,4 +12,92 @@ body {
   box-sizing: border-box;
 }
 
+/*ESTILOS BASE*/
+
+/* Contenedor principal de la alerta (Swal popup) */
+.validation-alert-simple {
+  font-family: 'Oswald', sans-serif !important; 
+  border-radius: 10px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1) !important;
+  background-color: #ffffff !important; /* Tema Claro: Fondo */
+  color: #333 !important; /* Tema Claro: Texto general */
+}
+
+/* Título de la alerta */
+.validation-alert-simple .swal2-title {
+  font-family: 'Oswald', sans-serif !important; 
+  font-size: 20px !important; /* Un poco más grande para Oswald */
+  font-weight: 700 !important;
+  color: #1a1a1a !important; /* Tema Claro: Color Título */
+  padding-bottom: 5px !important;
+}
+
+/* Contenido HTML (No necesita cambio de fuente aquí si el padre ya la tiene) */
+.validation-alert-content-simple {
+  text-align: left !important;
+  line-height: 1.5;
+  padding: 0 15px 15px 15px !important;
+}
+
+/* Estilos de párrafos y negritas */
+.validation-alert-simple-content p {
+  margin: 10px 0;
+  font-size: 16px; /* Ajustamos el tamaño ya que Oswald es más compacto */
+}
+
+.validation-alert-simple-content strong {
+  font-weight: 700; /* Usamos el peso 700 importado de Oswald */
+  color: #000;
+}
+
+/* Caja de sugerencia (la alerta interna) */
+.alert-suggestion-box {
+  /* Aseguramos que la caja de sugerencia use Oswald también */
+  font-family: 'Oswald', sans-serif !important;
+  margin-top: 15px;
+  padding: 10px;
+  border-left: 4px solid #ffc107; 
+  border-radius: 4px;
+  background-color: #fff8e1; 
+  font-size: 14px; /* Ajustamos el tamaño */
+  color: #6a5a06; 
+}
+
+/* Iconos y Botón de Error/Confirmación (ajustes menores) */
+.validation-alert-simple .swal2-icon.swal2-error {
+  border-color: #dc3545 !important;
+  color: #dc3545 !important;
+}
+.validation-alert-simple .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+  background-color: #dc3545 !important;
+}
+
+.validation-alert-simple .swal2-confirm {
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+}
+
+/*MODO OSCURO*/
+
+/* Usamos .dark-theme seguido del nombre del componente principal */
+.dark-theme .validation-alert-simple {
+  background-color: #2c2f33 !important; 
+  color: #c9d1d9 !important; 
+}
+
+/* Aseguramos que el título mantenga su color en tema oscuro */
+.dark-theme .validation-alert-simple .swal2-title {
+  color: #f0f0f0 !important;
+}
+
+.dark-theme .validation-alert-simple-content strong {
+  color: #ffffff !important; /* Negritas en blanco */
+}
+
+/* Caja de sugerencia en tema oscuro */
+.dark-theme .alert-suggestion-box {
+  background-color: #494116 !important; /* Fondo oscuro para advertencia */
+  border-left-color: #ffc107 !important; /* Borde de advertencia claro */
+  color: #f3e9c6 !important; /* Texto claro */
+}
 
