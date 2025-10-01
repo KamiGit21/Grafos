@@ -60,11 +60,16 @@
               @click="$emit('set-optimization-mode', 'minimize')"
               :class="{ 'active': currentOptimizationMode === 'minimize' }"
               class="toolbar-btn assignment-btn"
-              title="Minimizar costos"
+              title="Minimizar"
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 17L17 7M17 7H10M17 7V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M3 21L9 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path
+                  d="M3 15L9 21M9 21L15 15M9 21V3"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
               <span>Minimizar</span>
             </button>
@@ -73,11 +78,16 @@
               @click="$emit('set-optimization-mode', 'maximize')"
               :class="{ 'active': currentOptimizationMode === 'maximize' }"
               class="toolbar-btn assignment-btn"
-              title="Maximizar beneficios"
+              title="Maximizar"
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 17L17 7M17 7H10M17 7V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M15 21L21 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path
+                  d="M21 9L15 3M15 3L9 9M15 3V21"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
               <span>Maximizar</span>
             </button>
