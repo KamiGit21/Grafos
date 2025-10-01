@@ -196,12 +196,11 @@ const isEditing = ref(false);
 const isEraserActive = ref(false);
 const showMatrix = ref(false);
 const nodeShape = ref("circle");
-const currentTheme = localStorage.getItem('data-theme') || 'light-theme'
+const currentTheme = ref(localStorage.getItem('data-theme') || 'light-theme');
 const showHelp = ref(false);
 const showSelector = ref(false);
 const canvasBackgroundStyle = ref('grid');
-const canvasBackgroundColor = ref(currentTheme.valueOf === 'light-theme' ? '#ffffff' : '#333333');
-const isAddingNode = ref(false);
+const canvasBackgroundColor = ref(currentTheme.value === 'light-theme' ? '#ffffff' : '#333333');
 const isAddingEdge = ref(false);
 const edgeStartNode = ref(null);
 const isZoomEnabled = ref(false);
@@ -362,7 +361,7 @@ const adjacencyMatrix = computed(() => {
 
 const svgBackgroundStyles = computed(() => {
   const styles = {};
-  const defaultGridColor = currentTheme.valueOf === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
+  const defaultGridColor = currentTheme.value === 'light-theme' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)';
   const gridColor = canvasBackgroundStyle.value !== 'blank' ? defaultGridColor : canvasBackgroundColor.value;
   const scaledSizeGrid = 20 * zoomLevel.value;
   const scaledSizeDots = 15 * zoomLevel.value;
@@ -887,7 +886,7 @@ const exportJSON = () => {
     edges: edges.value,
     nextNodeId,
     nextEdgeId,
-    currentTheme: currentTheme.value,
+    currentTheme: currentTheme.value, // Usar .value
     canvasBackgroundStyle: canvasBackgroundStyle.value,
     canvasBackgroundColor: canvasBackgroundColor.value,
     zoomLevel: zoomLevel.value,
