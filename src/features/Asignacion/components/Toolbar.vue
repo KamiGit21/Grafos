@@ -53,6 +53,39 @@
 
         <div class="divider-vertical"></div>
 
+        <div class="nav-group">
+          <span class="group-label">Asignación</span>
+          <div class="button-group">
+            <button 
+              @click="$emit('set-optimization-mode', 'minimize')"
+              :class="{ 'active': currentOptimizationMode === 'minimize' }"
+              class="toolbar-btn assignment-btn"
+              title="Minimizar costos"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 17L17 7M17 7H10M17 7V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 21L9 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>Minimizar</span>
+            </button>
+
+            <button 
+              @click="$emit('set-optimization-mode', 'maximize')"
+              :class="{ 'active': currentOptimizationMode === 'maximize' }"
+              class="toolbar-btn assignment-btn"
+              title="Maximizar beneficios"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 17L17 7M17 7H10M17 7V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M15 21L21 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>Maximizar</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="divider-vertical"></div>
+
         <div class="nav-group tools-group">
           <span class="group-label">Herramientas</span>
           <div class="button-group">
@@ -89,7 +122,8 @@ import BackgroundSelector from './BackgroundSelector.vue';
 defineProps({
   canvasBackgroundStyle: String,
   canvasBackgroundColor: String,
-  isZoomEnabled: Boolean
+  isZoomEnabled: Boolean,
+  currentOptimizationMode: String 
 });
 
 defineEmits([
@@ -99,7 +133,8 @@ defineEmits([
   'import-json',
   'set-background',
   'update-background-color',
-  'toggle-zoom'
+  'toggle-zoom',
+  'set-optimization-mode'
 ]);
 </script>
 
