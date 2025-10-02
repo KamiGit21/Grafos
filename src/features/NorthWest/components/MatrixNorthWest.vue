@@ -186,17 +186,19 @@ const isBalanced = computed(() => {
 </script>
 
 <style scoped>
+
 .matrix-editor {
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 1);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(224, 201, 182, 0.3);
 }
 
 .dark-theme .matrix-editor {
-  background: rgba(58, 58, 58, 0.5);
-  border-color: rgba(70, 70, 70, 0.5);
+  background: rgba(58, 58, 58, 1);
+  border-color: rgba(70, 70, 70, 1);
 }
 
 .matrix-header {

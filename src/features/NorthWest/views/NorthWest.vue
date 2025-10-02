@@ -167,19 +167,16 @@ const solveMaximize = () => {
 }
 
 .light-theme {
-  background: linear-gradient(135deg, #fdfaf7 0%, #f3e8dd 100%);
   color: #333;
 }
 
 .dark-theme {
-  background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
   color: #e0e0e0;
 }
 
 .main-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px 0;
 }
 
 .content-grid {

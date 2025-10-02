@@ -155,7 +155,7 @@ const previousIteration = () => {
 
 <style scoped>
 .iterations-container {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 1);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -163,7 +163,7 @@ const previousIteration = () => {
 }
 
 .dark-theme.iterations-container {
-  background: rgba(58, 58, 58, 0.5);
+  background: rgba(58, 58, 58, 1);
   border-color: rgba(70, 70, 70, 0.5);
 }
 
