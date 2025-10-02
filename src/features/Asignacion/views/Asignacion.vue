@@ -76,11 +76,14 @@
       />
     </main>
 
+    <!-- MODIFICACIÓN: MatrixModal ahora muestra la matriz de asignación -->
     <MatrixModal
       v-if="showMatrix"
-      :nodes="nodes"
-      :adjacency-matrix="adjacencyMatrix"
+      :nodes="classifiedNodes.sources"
+      :destinations="classifiedNodes.destinations"
+      :assignment-matrix="assignmentMatrix"
       :current-theme="currentTheme"
+      :optimization-mode="optimizationMode"
       @close="toggleMatrixView"
     />
 
@@ -113,7 +116,7 @@ import GraphCanvas from '../components/GraphCanvas.vue';
 import NodeEditBox from '../components/NodeEditBox.vue';
 import EdgeEditBox from '../components/EdgeEditBox.vue';
 import MatrixModal from '../components/MatrixModal.vue';
-import AssignmentMatrix from '../components/AssignmentMatrix.vue'; // NUEVO
+import AssignmentMatrix from '../components/AssignmentMatrix.vue';
 
 import { useGraphData } from '../composables/useGraphData';
 import { useGraphInteractions } from '../composables/useGraphInteractions';
@@ -121,7 +124,7 @@ import { useGraphExport } from '../composables/useGraphExport';
 import { useGraphImport } from '../composables/useGraphImport';
 import { useZoomPan } from '../composables/useZoomPan';
 import { useAdjacencyMatrix } from '../composables/useAdjacencyMatrix';
-import { useAssignmentMatrix } from '../composables/useAssignmentMatrix'; // NUEVO
+import { useAssignmentMatrix } from '../composables/useAssignmentMatrix';
 
 export default {
   name: 'Asignacion',
@@ -238,22 +241,22 @@ export default {
       deselectElement
     );
 
-    // Adjacency Matrix
-    const { 
-      adjacencyMatrix, 
-      showMatrix, 
-      toggleMatrixView 
-    } = useAdjacencyMatrix(nodes, edges);
-
-    //Assignment Matrix
+    // Assignment Matrix (incluye classifiedNodes y assignmentMatrix)
     const { 
       showAssignmentMatrix,
       assignmentMatrix, 
       hungarianAlgorithm,
       optimizationMode,
+      classifiedNodes,
       toggleAssignmentMatrixView,
       setOptimizationMode
     } = useAssignmentMatrix(nodes, edges);
+
+    // Adjacency Matrix - mantenemos para compatibilidad pero no lo usamos para el modal
+    const { 
+      showMatrix, 
+      toggleMatrixView 
+    } = useAdjacencyMatrix(nodes, edges);
 
     // Event handlers
     const handleCanvasClick = (event) => {
@@ -346,13 +349,13 @@ export default {
       exportJSON,
       triggerImportJSON,
       importJSON,
-      adjacencyMatrix,
       showMatrix,
       toggleMatrixView,
       showAssignmentMatrix,
       assignmentMatrix,
       hungarianAlgorithm,
       optimizationMode,
+      classifiedNodes,
       toggleAssignmentMatrixView,
       setOptimizationMode,
       clearCanvas,
