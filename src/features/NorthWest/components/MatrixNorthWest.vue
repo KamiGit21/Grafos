@@ -97,7 +97,7 @@
               <input
                 type="number"
                 :value="costs[i][j]"
-                @input="$emit('update-cost', i, j, $event.target.value)"
+                @input="$event.target.value = Math.max(0, $event.target.value); $emit('update-cost', i, j, $event.target.value)"
                 class="cost-input"
                 min="0"
                 step="0.01"
@@ -107,7 +107,7 @@
               <input
                 type="number"
                 :value="supply[i]"
-                @input="$emit('update-supply', i, $event.target.value)"
+                @input="$event.target.value = Math.max(0, $event.target.value); $emit('update-supply', i, $event.target.value)"
                 class="supply-input"
                 min="0"
                 step="0.01"
@@ -124,7 +124,7 @@
               <input
                 type="number"
                 :value="dem"
-                @input="$emit('update-demand', j, $event.target.value)"
+                @input="$event.target.value = Math.max(0, $event.target.value); $emit('update-demand', j, $event.target.value)"
                 class="demand-input"
                 min="0"
                 step="0.01"
@@ -198,7 +198,6 @@ const isBalanced = computed(() => {
   flex-direction: column;
   max-height: 80vh;
   overflow: hidden;
-  
 }
 
 .dark-theme .matrix-editor {
@@ -513,8 +512,8 @@ const isBalanced = computed(() => {
 }
 
 .btn-remove {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   background: rgba(244, 67, 54, 0.15);
   border: none;
@@ -525,11 +524,13 @@ const isBalanced = computed(() => {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .btn-remove svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.5;
 }
 
 .btn-remove:hover {
