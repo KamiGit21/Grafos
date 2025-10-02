@@ -2,18 +2,20 @@
   <div class="johnson-modal-overlay" @click.self="closeModal">
     <div :class="['johnson-modal-content', theme]">
       <header class="johnson-modal-header">
-        <h2>Algoritmo de Johnson (CPM)</h2>
+        <h2>Algoritmo de Johnson (Minimización)</h2>
         <button class="close-button" @click="closeModal" title="Cerrar">×</button>
       </header>
+      <!--Veremos si se puede subir esto o si no funciona en nada el git-->
       
       <main class="johnson-modal-body" v-if="augmentedNodes.length > 0 && topoOrder.length > 0">
         <div class="info-panel">
-          <p><strong>Duración total del proyecto:</strong> {{ Math.round(projectDuration) }}</p>
-          <p><strong>Camino crítico:</strong> {{ criticalPath }}</p>
+          <p><strong>Duración mínima del proyecto:</strong> {{ Math.round(projectDuration) }}</p>
+          <p><strong>Camino mínimo:</strong> {{ minPath.join(' → ') }}</p>
+          <p><strong>Nodos en camino mínimo:</strong> {{ minPathNodes.join(', ') }}</p>
           <p v-if="hasCycles">¡Advertencia! El grafo tiene ciclos. Los resultados pueden ser inexactos.</p>
         </div>
-        <svg class="graph-svg" width="900" height="700" :viewBox="viewBox">
-          <g :transform="`translate(${fitPanX}, ${fitPanY}) scale(${scale})`">
+        <svg class="graph-svg" ref="graphSvgJohnson" @wheel.prevent="handleWheel" @mousedown.self="startPan" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag">
+          <g :transform="`translate(${panX}, ${panY}) scale(${zoomLevel})`">
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" :fill="arrowColor"></path>
@@ -27,7 +29,7 @@
                 stroke-width="2"
                 fill="none"
                 :marker-end="'url(#arrow)'"
-                :class="{ 'critical': edge.slack === 0 }"
+                :class="{ 'min-path': edge.isInMinPath }"
               />
               <text
                 :x="edge.textX"
@@ -49,11 +51,11 @@
 
             <g v-for="node in augmentedNodes" :key="node.id"  
               :transform="`translate(${node.x}, ${node.y})`"
-              :class="['node-group', node.shape, { 'critical': node.slack === 0 }]">
+              :class="['node-group', node.shape, { 'min-path-node': node.isInMinPath }]">
               <circle v-if="node.shape === 'circle'" :r="getNodeRadius(node)" :fill="node.color" :stroke="node.borderColor" stroke-width="2"/>
               <ellipse v-else :rx="getNodeEllipseRx(node)" ry="25" :fill="node.color" :stroke="node.borderColor" stroke-width="2"/>
               <text class="node-label" text-anchor="middle" y="-20">{{ node.label }}</text>
-              <text text-anchor="middle" y="5" font-size="12">{{ Math.round(node.es) }} | {{ isFinite(node.ls) ? Math.round(node.ls) : '∞' }}</text>
+              <text text-anchor="middle" y="5" font-size="12">{{ Math.round(node.ef) }} | {{ isFinite(node.lf) ? Math.round(node.lf) : '∞' }}</text>
               <text text-anchor="middle" y="25" font-size="12" class="node-slack-label">h={{ Math.round(node.slack) }}</text>
             </g>
           </g>
@@ -66,7 +68,10 @@
       </main>
 
       <footer class="johnson-modal-footer">
-        <button @click="exportImage">Exportar Imagen</button>
+        <button @click="exportJSON">Exportar JSON</button>
+        <button @click="triggerImportJSON">Importar JSON</button>
+        <input type="file" ref="importFileInputJohnson" @change="importJSON" accept=".json" style="display: none;" />
+        <button @click="clearAndClose">Eliminar todo y cerrar</button>
         <button @click="closeModal">Cerrar</button>
       </footer>
     </div>
@@ -74,10 +79,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import jsPDF from 'jspdf';
+import { ref, computed, watch, onMounted } from 'vue';
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'update-graph', 'clear-graph']);
 
 const props = defineProps({
   theme: {
@@ -123,19 +127,26 @@ const topoOrder = computed(() => {
 
 const hasCycles = computed(() => topoOrder.value.length < props.nodes.length);
 
-const esMap = computed(() => {
+// Para minimización: Early Finish (EF) - tiempo más temprano de finalización
+const efMap = computed(() => {
   if (topoOrder.value.length === 0) return new Map();
-  const es = new Map(props.nodes.map(n => [n.id, inDegrees.value[n.id] === 0 ? 0 : Number.NEGATIVE_INFINITY]));
+  const ef = new Map(props.nodes.map(n => [n.id, inDegrees.value[n.id] === 0 ? 0 : Number.POSITIVE_INFINITY]));
+  
   topoOrder.value.forEach(node => {
-    const nodeEs = es.get(node.id);
+    const nodeEf = ef.get(node.id);
+    
+    // Actualizar los sucesores (tomando el mínimo)
     props.edges.filter(e => e.from === node.id).forEach(edge => {
       const weight = Number(edge.value) || 0;
-      const newEs = nodeEs + weight;
-      const curr = es.get(edge.to);
-      if (newEs > curr) es.set(edge.to, newEs);
+      const newEf = nodeEf + weight;
+      const currentEf = ef.get(edge.to);
+      if (newEf < currentEf) {
+        ef.set(edge.to, newEf);
+      }
     });
   });
-  return es;
+  
+  return ef;
 });
 
 const outDegrees = computed(() => {
@@ -149,76 +160,122 @@ const outDegrees = computed(() => {
 
 const reverseTopo = computed(() => topoOrder.value.length > 0 ? [...topoOrder.value].reverse() : []);
 
-const lsMap = computed(() => {
+// Para minimización: Late Finish (LF) - tiempo más tardío de finalización (usando el mayor valor posible)
+const lfMap = computed(() => {
   if (topoOrder.value.length === 0) return new Map();
-  const ls = new Map(props.nodes.map(n => [n.id, Number.POSITIVE_INFINITY]));
-  const sinks = props.nodes.filter(n => outDegrees.value[n.id] === 0);
-  sinks.forEach(sink => ls.set(sink.id, esMap.value.get(sink.id) || 0));
+  const lf = new Map(props.nodes.map(n => [n.id, Number.NEGATIVE_INFINITY]));
+  
+  // Para nodos sumidero (sin sucesores), LF = EF (pero usando el mayor valor posible entre todos los sumideros)
+  const sinkNodes = props.nodes.filter(n => outDegrees.value[n.id] === 0);
+  const maxEfSink = Math.max(...sinkNodes.map(n => efMap.value.get(n.id) || 0));
+  
+  sinkNodes.forEach(node => {
+    // Usar el mayor EF entre todos los sumideros como LF para cada sumidero
+    lf.set(node.id, maxEfSink);
+  });
+  
+  // Procesar en orden topológico inverso (tomando el máximo)
   reverseTopo.value.forEach(node => {
-    const incomingEdges = props.edges.filter(e => e.to === node.id);
-    incomingEdges.forEach(edge => {
-      const predId = edge.from;
+    const nodeLf = lf.get(node.id);
+    
+    // Actualizar predecesores (tomando el máximo)
+    props.edges.filter(e => e.to === node.id).forEach(edge => {
       const weight = Number(edge.value) || 0;
-      const newLs = (ls.get(node.id) || 0) - weight;
-      const currLs = ls.get(predId);
-      if (newLs < currLs) {
-        ls.set(predId, newLs);
+      const newLf = nodeLf - weight;
+      const currentLf = lf.get(edge.from);
+      
+      // Tomar el mayor valor posible
+      if (newLf > currentLf) {
+        lf.set(edge.from, newLf);
       }
     });
   });
-  return ls;
+  
+  return lf;
+});
+
+// Encontrar el camino mínimo (secuencia de nodos con holgura cero)
+const minPath = computed(() => {
+  if (topoOrder.value.length === 0 || hasCycles.value) return [];
+  
+  const path = [];
+  const visited = new Set();
+  
+  // Encontrar nodos iniciales (sin predecesores)
+  const startNodes = props.nodes.filter(n => inDegrees.value[n.id] === 0);
+  if (startNodes.length === 0) return [];
+  
+  // Función recursiva para encontrar el camino mínimo
+  const findMinPath = (node) => {
+    if (visited.has(node.id)) return;
+    visited.add(node.id);
+    
+    path.push(node.label);
+    
+    // Encontrar sucesores con holgura cero
+    const outgoingEdges = props.edges.filter(e => e.from === node.id);
+    const zeroSlackEdges = outgoingEdges.filter(edge => {
+      const edgeSlack = (lfMap.value.get(edge.to) || 0) - (efMap.value.get(edge.from) || 0) - (Number(edge.value) || 0);
+      return Math.abs(edgeSlack) < 0.001; // Considerar cero con tolerancia
+    });
+    
+    if (zeroSlackEdges.length > 0) {
+      // Seguir por la primera arista con holgura cero
+      const nextEdge = zeroSlackEdges[0];
+      const nextNode = props.nodes.find(n => n.id === nextEdge.to);
+      if (nextNode) {
+        findMinPath(nextNode);
+      }
+    }
+  };
+  
+  // Empezar desde el primer nodo inicial
+  findMinPath(startNodes[0]);
+  
+  return path;
+});
+
+const minPathNodes = computed(() => {
+  return minPath.value;
 });
 
 const augmentedNodes = computed(() => {
-  return props.nodes.map(n => ({
-    ...n,
-    es: esMap.value.get(n.id) || 0,
-    ls: lsMap.value.get(n.id) || 0,
-    slack: (lsMap.value.get(n.id) || 0) - (esMap.value.get(n.id) || 0)
-  }));
+  return props.nodes.map(n => {
+    const ef = efMap.value.get(n.id) || 0;
+    const lf = lfMap.value.get(n.id) || 0;
+    const slack = lf - ef;
+    const isInMinPath = minPath.value.includes(n.label);
+    
+    return {
+      ...n,
+      ef,
+      lf,
+      slack,
+      isInMinPath
+    };
+  });
 });
 
 const augmentedEdges = computed(() => {
-  return props.edges.map(e => ({
-    ...e,
-    slack: (lsMap.value.get(e.to) || 0) - (esMap.value.get(e.from) || 0) - (Number(e.value) || 0)
-  }));
+  return props.edges.map(e => {
+    const slack = (lfMap.value.get(e.to) || 0) - (efMap.value.get(e.from) || 0) - (Number(e.value) || 0);
+    const isInMinPath = Math.abs(slack) < 0.001; // Considerar cero con tolerancia
+    
+    return {
+      ...e,
+      slack,
+      isInMinPath
+    };
+  });
 });
 
 const projectDuration = computed(() => {
-  const maxEs = Math.max(...props.nodes.map(n => esMap.value.get(n.id) || 0));
-  return isFinite(maxEs) ? maxEs : 0;
-});
-
-const criticalPath = computed(() => {
-  if (topoOrder.value.length === 0 || hasCycles.value) return 'Grafo inválido (ciclos detectados)';
-  let maxSink = props.nodes.find(n => outDegrees.value[n.id] === 0);
-  props.nodes.forEach(n => {
-    if (outDegrees.value[n.id] === 0) {
-      const esN = esMap.value.get(n.id) || 0;
-      const esMax = esMap.value.get(maxSink.id) || 0;
-      if (esN > esMax) maxSink = n;
-    }
-  });
-  const path = [];
-  let current = maxSink;
-  while (current) {
-    path.unshift(current.label);
-    if (inDegrees.value[current.id] === 0) break;
-    const preds = props.edges.filter(e => e.to === current.id);
-    let pred = null;
-    for (let pEdge of preds) {
-      const predNode = props.nodes.find(n => n.id === pEdge.from);
-      const weight = Number(pEdge.value) || 0;
-      if ((esMap.value.get(current.id) || 0) === (esMap.value.get(predNode.id) || 0) + weight) {
-        pred = predNode;
-        break;
-      }
-    }
-    if (!pred) break;
-    current = pred;
-  }
-  return path.join(' → ');
+  if (props.nodes.length === 0) return 0;
+  
+  // La duración del proyecto es el máximo EF entre todos los nodos sumidero
+  const sinkNodes = props.nodes.filter(n => outDegrees.value[n.id] === 0);
+  const maxEf = sinkNodes.length > 0 ? Math.max(...sinkNodes.map(n => efMap.value.get(n.id) || 0)) : 0;
+  return isFinite(maxEf) ? maxEf : 0;
 });
 
 const nodeMap = computed(() => new Map(augmentedNodes.value.map(node => [node.id, node])));
@@ -240,7 +297,7 @@ const edgesWithCoords = computed(() => {
       const p1x = from.x + Math.cos(tangentAngle) * nodeRadius;
       const p1y = from.y + Math.sin(tangentAngle) * nodeRadius;
       const p2x = from.x - Math.cos(tangentAngle) * nodeRadius;
-      const p2y = from.y - Math.sin(tangentAngle) * nodeRadius;
+      const p2y = from.y + Math.sin(tangentAngle) * nodeRadius;
       const controlPointX = from.x + Math.cos(angleRad) * (nodeRadius + 2 * loopRadius);
       const controlPointY = from.y + Math.sin(angleRad) * (nodeRadius + 2 * loopRadius);
       let endPointX = p1x, endPointY = p1y;
@@ -295,24 +352,62 @@ const maxX = computed(() => Math.max(...augmentedNodes.value.map(n => n.x + getN
 const minY = computed(() => Math.min(...augmentedNodes.value.map(n => n.y - getNodeRadius(n) - 30)));
 const maxY = computed(() => Math.max(...augmentedNodes.value.map(n => n.y + getNodeRadius(n) + 30)));
 
-const viewBox = computed(() => {
-  const width = maxX.value - minX.value;
-  const height = maxY.value - minY.value;
-  return `${minX.value} ${minY.value} ${width} ${height}`;
-});
+const zoomLevel = ref(1);
+const panX = ref(0);
+const panY = ref(0);
+const isPanning = ref(false);
+const lastMousePos = ref({ x: null, y: null });
+const graphSvgJohnson = ref(null);
+const importFileInputJohnson = ref(null);
 
-const scale = computed(() => {
+const resetView = () => {
+  const graphWidth = maxX.value - minX.value || 800;
+  const graphHeight = maxY.value - minY.value || 600;
   const svgWidth = 900;
-  const svgHeight = 700;
-  const graphWidth = maxX.value - minX.value;
-  const graphHeight = maxY.value - minY.value;
-  const scaleX = graphWidth > 0 ? svgWidth / graphWidth : 1;
-  const scaleY = graphHeight > 0 ? (svgHeight - 100) / graphHeight : 1; // Account for info-panel
-  return Math.min(scaleX, scaleY, 1); // Ensure graph fits within SVG
-});
+  const svgHeight = 600;
+  zoomLevel.value = Math.min(svgWidth / graphWidth, svgHeight / graphHeight, 1);
+  panX.value = (svgWidth - graphWidth * zoomLevel.value) / 2 - minX.value * zoomLevel.value;
+  panY.value = (svgHeight - graphHeight * zoomLevel.value) / 2 - minY.value * zoomLevel.value + 50;
+};
 
-const fitPanX = computed(() => (900 - (maxX.value - minX.value) * scale.value) / 2 - minX.value * scale.value);
-const fitPanY = computed(() => (700 - (maxY.value - minY.value) * scale.value) / 2 - minY.value * scale.value);
+watch(() => [props.nodes, props.edges], resetView, { deep: true });
+
+onMounted(resetView);
+
+const handleWheel = (event) => {
+  event.preventDefault();
+  const delta = event.deltaY < 0 ? 1.1 : 0.9;
+  zoomLevel.value = Math.max(0.3, Math.min(3, zoomLevel.value * delta));
+};
+
+const startPan = (event) => {
+  const svgRect = graphSvgJohnson.value.getBoundingClientRect();
+  lastMousePos.value = {
+    x: event.clientX - svgRect.left,
+    y: event.clientY - svgRect.top
+  };
+  isPanning.value = true;
+};
+
+const onDrag = (event) => {
+  if (isPanning.value) {
+    const svgRect = graphSvgJohnson.value.getBoundingClientRect();
+    const mouseX = event.clientX - svgRect.left;
+    const mouseY = event.clientY - svgRect.top;
+    if (lastMousePos.value.x !== null && lastMousePos.value.y !== null) {
+      const dx = (mouseX - lastMousePos.value.x) / zoomLevel.value;
+      const dy = (mouseY - lastMousePos.value.y) / zoomLevel.value;
+      panX.value += dx;
+      panY.value += dy;
+    }
+    lastMousePos.value = { x: mouseX, y: mouseY };
+  }
+};
+
+const stopDrag = () => {
+  isPanning.value = false;
+  lastMousePos.value = { x: null, y: null };
+};
 
 const getNodeRadius = (node) => {
   const baseRadius = 15;
@@ -330,87 +425,63 @@ const closeModal = () => {
   emit('close');
 };
 
-const exportImage = async () => {
-  const fileName = prompt("Ingresa el nombre para la imagen:", "johnson_result");
-  if (!fileName || fileName.trim() === "") return;
+const exportJSON = () => {
+  const fileName = prompt("Ingresa el nombre del archivo para guardar:", "grafo_johnson_min");
+  if (!fileName) return;
 
-  const svgElement = document.querySelector('.graph-svg');
-  if (!svgElement) {
-    alert("Error: No se encontró el elemento SVG.");
-    return;
-  }
+  const nextNodeIdLocal = Math.max(0, ...props.nodes.map(n => n.id)) + 1 || 1;
+  const nextEdgeIdLocal = Math.max(0, ...props.edges.map(e => e.id)) + 1 || 1;
 
-  const clonedSvg = svgElement.cloneNode(true);
-  const svgRect = svgElement.getBoundingClientRect();
-  clonedSvg.setAttribute('width', svgRect.width);
-  clonedSvg.setAttribute('height', svgRect.height);
-  if (!clonedSvg.getAttribute('xmlns')) {
-    clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  }
-
-  // Set viewBox to match computed bounds
-  clonedSvg.setAttribute('viewBox', viewBox.value);
-
-  // Adjust the transform to match the displayed graph
-  const g = clonedSvg.querySelector('g');
-  if (g) {
-    g.setAttribute('transform', `translate(${fitPanX.value}, ${fitPanY.value}) scale(${scale.value})`);
-  }
-
-  // Add background
-  const backgroundStyle = `
-    <rect x="${minX.value}" y="${minY.value}" width="${maxX.value - minX.value}" height="${maxY.value - minY.value}" 
-      fill="${props.theme === 'light-theme' ? '#ffffff' : '#2a2a2a'}" />
-  `;
-  const parser = new DOMParser();
-  const backgroundElement = parser.parseFromString(backgroundStyle, 'image/svg+xml').documentElement;
-  clonedSvg.insertBefore(backgroundElement, clonedSvg.firstChild);
-
-  // Include info-panel content in the export
-  const infoPanel = document.querySelector('.info-panel');
-  if (infoPanel) {
-    const infoText = `
-      <foreignObject x="${minX.value}" y="${minY.value - 80}" width="900" height="80">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: Arial, sans-serif; font-size: 14px; color: ${props.theme === 'light-theme' ? '#333' : '#e0e0e0'}; text-align: center;">
-          <p><strong>Duración total del proyecto:</strong> ${Math.round(projectDuration.value)}</p>
-          <p><strong>Camino crítico:</strong> ${criticalPath.value}</p>
-          ${hasCycles.value ? '<p style="color: #e74c3c;">¡Advertencia! El grafo tiene ciclos. Los resultados pueden ser inexactos.</p>' : ''}
-        </div>
-      </foreignObject>
-    `;
-    clonedSvg.insertBefore(parser.parseFromString(infoText, 'image/svg+xml').documentElement, clonedSvg.firstChild);
-  }
-
-  const svgString = new XMLSerializer().serializeToString(clonedSvg);
-  const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
-
-  const img = new Image();
-  img.width = svgRect.width;
-  img.height = svgRect.height;
-
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = svgRect.width * 2;
-    canvas.height = svgRect.height * 2;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    const link = document.createElement('a');
-    link.download = `${fileName.trim()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-
-    URL.revokeObjectURL(url);
+  const data = { 
+    nodes: props.nodes, 
+    edges: props.edges, 
+    nextNodeId: nextNodeIdLocal, 
+    nextEdgeId: nextEdgeIdLocal, 
+    currentTheme: props.theme,
+    canvasBackgroundStyle: 'grid',
+    canvasBackgroundColor: props.theme === 'light-theme' ? '#ffffff' : '#333333',
+    zoomLevel: 1,
+    panX: 0,
+    panY: 0
   };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${fileName.trim()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
-  img.onerror = (err) => {
-    URL.revokeObjectURL(url);
-    console.error("Error al cargar el SVG como imagen.", err);
-    alert("Ocurrió un error al generar la imagen.");
+const triggerImportJSON = () => {
+  importFileInputJohnson.value.click();
+};
+
+const importJSON = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      emit('update-graph', data);
+      alert("Grafo importado exitosamente.");
+    } catch (error) {
+      console.error("Error al importar el JSON:", error);
+      alert("Error al importar el archivo JSON. Asegúrate de que sea un formato válido.");
+    }
   };
+  reader.readAsText(file);
+  event.target.value = '';
+};
 
-  img.src = url;
+const clearAndClose = () => {
+  if (confirm("¿Estás seguro de que quieres borrar todo el grafo? Esta acción no se puede deshacer.")) {
+    emit('clear-graph');
+    closeModal();
+  }
 };
 </script>
 
@@ -421,14 +492,14 @@ const exportImage = async () => {
   pointer-events: none;
 }
 
-.critical path {
-  stroke: red !important;
+.min-path {
+  stroke: blue !important;
   stroke-width: 3 !important;
 }
 
-.critical circle, .critical ellipse {
-  fill: rgba(255, 0, 0, 0.2) !important;
-  stroke: red !important;
+.min-path-node circle, .min-path-node ellipse {
+  fill: rgba(0, 0, 255, 0.2) !important;
+  stroke: blue !important;
   stroke-width: 3 !important;
 }
 
@@ -507,6 +578,8 @@ const exportImage = async () => {
 
 .graph-svg {
   flex-grow: 1;
+  width: 100%;
+  height: 100%;
   background-color: v-bind('theme === "light-theme" ? "#ffffff" : "#2a2a2a"');
   border-radius: 5px;
   border: 2px solid v-bind('theme === "light-theme" ? "#4a90e2" : "#6ab0ff"');

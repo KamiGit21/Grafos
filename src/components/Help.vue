@@ -1,6 +1,6 @@
 <template>
-  <div class="help-modal-overlay" @click.self="closeModal">
-    <div :class="['help-modal-content', theme]">
+  <div class="help-modal-overlay" @click.self="closeModal" :class="currentTheme">
+    <div class="help-modal-content" >
       <header class="help-modal-header">
         <h2>Manual de Usuario</h2>
         <button class="close-button" @click="closeModal" title="Cerrar">×</button>
@@ -27,16 +27,18 @@ const emit = defineEmits(['close']);
 
 // Se definen las props que el componente puede recibir, en este caso el tema
 const props = defineProps({
-  theme: {
+  pdfEmbedUrl: {
     type: String,
-    default: 'light-theme' // Tema por defecto si no se proporciona
-  }
+    default: 'https://drive.google.com/file/d/1-joPgGxcUroXIreuMnEx8sXp6hshqBw4/preview'
+  },
+  pdfViewerUrl: {
+    type: String,
+    default: 'https://drive.google.com/file/d/1-joPgGxcUroXIreuMnEx8sXp6hshqBw4/view?usp=sharing'
+  },
 });
 
-// URL de Google Drive modificada para ser embebida (reemplazando /view por /preview)
-const pdfEmbedUrl = ref('https://drive.google.com/file/d/1-joPgGxcUroXIreuMnEx8sXp6hshqBw4/preview');
-// URL original de Google Drive para visualización directa
-const pdfViewerUrl = ref('https://drive.google.com/file/d/1-joPgGxcUroXIreuMnEx8sXp6hshqBw4/view?usp=sharing');
+const pdfEmbedUrl = ref(props.pdfEmbedUrl);
+const pdfViewerUrl = ref(props.pdfViewerUrl);
 
 // Función que emite el evento 'close' para que el padre cierre el modal
 const closeModal = () => {
@@ -132,6 +134,9 @@ const closeModal = () => {
   color: #333;
 }
 .light-theme .help-modal-footer button:hover { background-color: #e0e0e0; }
+.light-theme .help-modal-content{
+  background-color: #e0e0e0;
+}
 
 
 .dark-theme {
@@ -148,4 +153,7 @@ const closeModal = () => {
   color: #e0e0e0;
 }
 .dark-theme .help-modal-footer button:hover { background-color: #5a5a5a; }
+.dark-theme .help-modal-content{
+  background-color: #333;
+}
 </style>
