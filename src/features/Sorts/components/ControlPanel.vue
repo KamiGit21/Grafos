@@ -29,7 +29,7 @@
           <div class="control-group">
             <label>Cantidad:</label>
             <div class="input-group">
-              <input type="number" v-model.number="localSize" min="5" max="30" @input="handleSizeInput" placeholder="">
+              <input type="number" v-model.number="localSize" min="1" @input="handleSizeInput" placeholder="">
               <span class="value-display">{{ localSize || '-' }}</span>
             </div>
           </div>
@@ -205,9 +205,8 @@ const hasAllParams = computed(() => {
  */
 const handleSizeInput = () => {
   if (localSize.value === '') return;
-  // Limitar entre 5 y 30 elementos
-  if (localSize.value < 5) localSize.value = 5;
-  if (localSize.value > 30) localSize.value = 30;
+  // 🔄 MODIFICACIÓN: Solo validar que sea al menos 1 elemento
+  if (localSize.value < 1) localSize.value = 1;
 };
 
 /**
@@ -268,10 +267,11 @@ const submitManualInput = () => {
       return;
     }
 
-    if (numbers.length > 30) {
-      alert('El array no puede tener más de 30 elementos');
-      return;
-    }
+    // 🔄 MODIFICACIÓN: Eliminada la validación de máximo 30 elementos
+    // if (numbers.length > 30) {
+    //   alert('El array no puede tener más de 30 elementos');
+    //   return;
+    // }
 
     // Emitir array validado al padre
     emit('manual-input', numbers);
