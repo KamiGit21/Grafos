@@ -162,7 +162,7 @@ const previousIteration = () => {
   border: 1px solid rgba(224, 201, 182, 0.3);
 }
 
-.dark-theme.iterations-container {
+.dark-theme .iterations-container {
   background: rgba(58, 58, 58, 1);
   border-color: rgba(70, 70, 70, 0.5);
 }
@@ -467,18 +467,18 @@ const previousIteration = () => {
 
 /* Dark Theme */
 .dark-theme .iteration-controls {
-  background: rgba(70, 70, 70, 0.3);
-  border-color: rgba(70, 70, 70, 0.5);
+  background: rgba(70, 70, 70, 1);
+  border-color: rgba(70, 70, 70, 1);
 }
 
 .dark-theme .nav-btn {
-  background: rgba(70, 70, 70, 0.5);
-  border-color: rgba(70, 70, 70, 0.6);
+  background: rgba(70, 70, 70, 1);
+  border-color: rgba(70, 70, 70, 1);
   color: #c9b4a4;
 }
 
 .dark-theme .nav-btn:hover:not(:disabled) {
-  background: rgba(90, 90, 90, 0.7);
+  background: rgba(90, 90, 90, 1);
 }
 
 .dark-theme .cost-display {
@@ -502,7 +502,7 @@ const previousIteration = () => {
 }
 
 .dark-theme .matrix-cell {
-  background: rgba(58, 58, 58, 0.6);
+  background: rgba(58, 58, 58, 1);
 }
 
 .dark-theme .matrix-cell.has-value {

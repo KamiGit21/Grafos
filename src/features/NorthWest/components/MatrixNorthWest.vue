@@ -194,6 +194,11 @@ const isBalanced = computed(() => {
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(224, 201, 182, 0.3);
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  overflow: hidden;
+  
 }
 
 .dark-theme .matrix-editor {
@@ -208,6 +213,7 @@ const isBalanced = computed(() => {
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 2px solid rgba(224, 201, 182, 0.3);
+  flex-shrink: 0;
 }
 
 .header-left {
@@ -225,6 +231,7 @@ const isBalanced = computed(() => {
   background: linear-gradient(135deg, rgba(224, 201, 182, 0.3), rgba(201, 168, 135, 0.2));
   border-radius: 10px;
   color: #c9a887;
+  flex-shrink: 0;
 }
 
 .matrix-icon svg {
@@ -246,6 +253,7 @@ const isBalanced = computed(() => {
 .matrix-actions {
   display: flex;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .btn-add {
@@ -261,11 +269,13 @@ const isBalanced = computed(() => {
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
 .btn-add svg {
   width: 16px;
   height: 16px;
+  flex-shrink: 0;
 }
 
 .btn-add:hover {
@@ -277,28 +287,69 @@ const isBalanced = computed(() => {
   overflow: auto;
   border-radius: 12px;
   border: 1px solid rgba(224, 201, 182, 0.3);
+  flex: 1;
+  min-height: 0;
 }
 
 .transport-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   min-width: 600px;
 }
 
 .transport-table th,
 .transport-table td {
-  padding: 12px;
+  padding: 8px;
   text-align: center;
   border: 1px solid rgba(224, 201, 182, 0.2);
   transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.transport-table th {
+  min-width: 120px;
+  max-width: 150px;
+}
+
+.transport-table td {
+  min-width: 100px;
+  max-width: 120px;
+}
+
+/* Reduce sizes when there are more columns/rows */
+.transport-table:has(thead th:nth-child(5)) th,
+.transport-table:has(thead th:nth-child(5)) td {
+  min-width: 90px;
+  max-width: 110px;
+  padding: 6px;
+  font-size: 13px;
+}
+
+.transport-table:has(thead th:nth-child(7)) th,
+.transport-table:has(thead th:nth-child(7)) td {
+  min-width: 80px;
+  max-width: 100px;
+  padding: 5px;
+  font-size: 12px;
+}
+
+.transport-table:has(thead th:nth-child(9)) th,
+.transport-table:has(thead th:nth-child(9)) td {
+  min-width: 70px;
+  max-width: 90px;
+  padding: 4px;
+  font-size: 11px;
 }
 
 .corner-cell {
-  background: linear-gradient(135deg, rgba(224, 201, 182, 0.2), rgba(201, 168, 135, 0.15));
+  background: #d4baa5;
   position: sticky;
   left: 0;
   z-index: 3;
+}
+
+.dark-theme .corner-cell {
+  background: #333;
 }
 
 .corner-content {
@@ -324,9 +375,9 @@ const isBalanced = computed(() => {
 
 .dest-header,
 .supply-header {
-  background: linear-gradient(180deg, rgba(224, 201, 182, 0.25), rgba(224, 201, 182, 0.15));
+  background: #e0c9b6;
   font-weight: 600;
-  color: #8b7355;
+  color: #5d4a36;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -334,9 +385,9 @@ const isBalanced = computed(() => {
 
 .source-header,
 .demand-header {
-  background: linear-gradient(90deg, rgba(224, 201, 182, 0.25), rgba(224, 201, 182, 0.15));
+  background: #e0c9b6;
   font-weight: 600;
-  color: #8b7355;
+  color: #5d4a36;
   position: sticky;
   left: 0;
   z-index: 1;
@@ -358,8 +409,25 @@ const isBalanced = computed(() => {
   font-size: 13px;
   color: #6d5940;
   text-align: center;
-  min-width: 100px;
+  width: 100%;
+  max-width: 140px;
   transition: all 0.2s ease;
+}
+
+/* Adjust input size based on table size */
+.transport-table:has(thead th:nth-child(5)) .name-input {
+  max-width: 100px;
+  font-size: 12px;
+}
+
+.transport-table:has(thead th:nth-child(7)) .name-input {
+  max-width: 80px;
+  font-size: 11px;
+}
+
+.transport-table:has(thead th:nth-child(9)) .name-input {
+  max-width: 70px;
+  font-size: 10px;
 }
 
 .name-input:focus {
@@ -372,8 +440,10 @@ const isBalanced = computed(() => {
 .cost-input,
 .supply-input,
 .demand-input {
-  width: 100%;
-  padding: 8px;
+  width: 70%;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-right: 12px;
   border: 2px solid rgba(224, 201, 182, 0.3);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.8);
@@ -426,7 +496,7 @@ const isBalanced = computed(() => {
 .balance-indicator {
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 8px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -487,13 +557,13 @@ const isBalanced = computed(() => {
 
 .dark-theme .dest-header,
 .dark-theme .supply-header {
-  background: linear-gradient(180deg, rgba(70, 70, 70, 0.5), rgba(70, 70, 70, 0.3));
+  background: linear-gradient(180deg, rgba(70, 70, 70, 1), rgba(70, 70, 70, 1));
   color: #c9b4a4;
 }
 
 .dark-theme .source-header,
 .dark-theme .demand-header {
-  background: linear-gradient(90deg, rgba(70, 70, 70, 0.5), rgba(70, 70, 70, 0.3));
+  background: linear-gradient(90deg, rgba(70, 70, 70, 1), rgba(70, 70, 70, 1));
   color: #c9b4a4;
 }
 
