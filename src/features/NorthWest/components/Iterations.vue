@@ -160,6 +160,8 @@ const previousIteration = () => {
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(224, 201, 182, 0.3);
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .dark-theme .iterations-container {
@@ -245,6 +247,7 @@ const previousIteration = () => {
   justify-content: center;
   transition: all 0.2s ease;
   color: #8b7355;
+  flex-shrink: 0;
 }
 
 .nav-btn:hover:not(:disabled) {
@@ -344,7 +347,6 @@ const previousIteration = () => {
 }
 
 .solution-table {
-  width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   min-width: 500px;
@@ -356,6 +358,50 @@ const previousIteration = () => {
   text-align: center;
   border: 1px solid rgba(224, 201, 182, 0.2);
   transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.solution-table th {
+  min-width: 120px;
+  max-width: 150px;
+}
+
+.solution-table td {
+  min-width: 100px;
+  max-width: 120px;
+}
+
+/* Reduce sizes when there are more columns */
+.solution-table:has(thead th:nth-child(5)) th,
+.solution-table:has(thead th:nth-child(5)) td {
+  min-width: 90px;
+  max-width: 110px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.solution-table:has(thead th:nth-child(7)) th,
+.solution-table:has(thead th:nth-child(7)) td {
+  min-width: 80px;
+  max-width: 100px;
+  padding: 8px;
+  font-size: 12px;
+}
+
+.solution-table:has(thead th:nth-child(9)) th,
+.solution-table:has(thead th:nth-child(9)) td {
+  min-width: 70px;
+  max-width: 90px;
+  padding: 6px;
+  font-size: 11px;
+}
+
+.solution-table:has(thead th:nth-child(11)) th,
+.solution-table:has(thead th:nth-child(11)) td {
+  min-width: 60px;
+  max-width: 80px;
+  padding: 5px;
+  font-size: 10px;
 }
 
 .corner-cell {
@@ -366,6 +412,7 @@ const previousIteration = () => {
   left: 0;
   top: 0;
   z-index: 3;
+  font-size: 12px;
 }
 
 .header-cell {
@@ -397,7 +444,20 @@ const previousIteration = () => {
   background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
   color: #4caf50;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 15px;
+}
+
+/* Adjust font size for has-value cells based on table size */
+.solution-table:has(thead th:nth-child(7)) .matrix-cell.has-value {
+  font-size: 13px;
+}
+
+.solution-table:has(thead th:nth-child(9)) .matrix-cell.has-value {
+  font-size: 12px;
+}
+
+.solution-table:has(thead th:nth-child(11)) .matrix-cell.has-value {
+  font-size: 11px;
 }
 
 .matrix-cell:hover {
@@ -425,6 +485,7 @@ const previousIteration = () => {
   width: 32px;
   height: 32px;
   color: #4caf50;
+  flex-shrink: 0;
 }
 
 .result-header h3 {
