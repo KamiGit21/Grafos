@@ -6,6 +6,7 @@
       :canvas-background-style="canvasBackgroundStyle"
       :canvas-background-color="canvasBackgroundColor"
       :is-zoom-enabled="isZoomEnabled"
+      :current-optimization-mode="optimizationMode"
       @export-image="exportImage"
       @export-pdf="exportPDF"
       @export-json="exportJSON"
@@ -13,6 +14,7 @@
       @set-background="setCanvasBackground"
       @update-background-color="canvasBackgroundColor = $event"
       @toggle-zoom="toggleZoomMode"
+      @set-optimization-mode="setOptimizationMode"
     />
 
     <main class="main-content">
@@ -82,7 +84,16 @@
       @close="toggleMatrixView"
     />
 
-    <button @click="showSelector = true" class="help-button" title="Algoritmo de Johnson y Asignacion" style="bottom: 85px;">🎨</button>
+    <AssignmentMatrix
+      v-if="showAssignmentMatrix"
+      :nodes="nodes"
+      :assignment-matrix="assignmentMatrix"
+      :hungarian-result="hungarianAlgorithm"
+      :optimization-mode="optimizationMode"
+      :current-theme="currentTheme"
+      @close="toggleAssignmentMatrixView"
+    />
+
     <button @click="showHelp = true" class="help-button" title="Ayuda" style="bottom: 25px;">?</button>
 
     <Help v-if="showHelp" :theme="currentTheme" @close="showHelp = false" />
@@ -102,6 +113,7 @@ import GraphCanvas from '../components/GraphCanvas.vue';
 import NodeEditBox from '../components/NodeEditBox.vue';
 import EdgeEditBox from '../components/EdgeEditBox.vue';
 import MatrixModal from '../components/MatrixModal.vue';
+import AssignmentMatrix from '../components/AssignmentMatrix.vue'; // NUEVO
 
 import { useGraphData } from '../composables/useGraphData';
 import { useGraphInteractions } from '../composables/useGraphInteractions';
@@ -109,6 +121,7 @@ import { useGraphExport } from '../composables/useGraphExport';
 import { useGraphImport } from '../composables/useGraphImport';
 import { useZoomPan } from '../composables/useZoomPan';
 import { useAdjacencyMatrix } from '../composables/useAdjacencyMatrix';
+import { useAssignmentMatrix } from '../composables/useAssignmentMatrix'; // NUEVO
 
 export default {
   name: 'Asignacion',
@@ -120,12 +133,12 @@ export default {
     NodeEditBox,
     EdgeEditBox,
     MatrixModal,
+    AssignmentMatrix,
     Help
   },
   setup() {
     const currentTheme = localStorage.getItem('data-theme') || 'light-theme';
     const showHelp = ref(false);
-    const showSelector = ref(false);
     const importFileInput = ref(null);
     const graphSvg = ref(null);
 
@@ -145,7 +158,7 @@ export default {
       updateFromJohnson
     } = graphData;
 
-    // Graph interactions - pasa el composable completo para evitar ciclos de dependencias
+    // Graph interactions
     const interactions = useGraphInteractions(graphData);
     const {
       isAddingNode,
@@ -225,8 +238,22 @@ export default {
       deselectElement
     );
 
-    // Matrix
-    const { adjacencyMatrix, showMatrix, toggleMatrixView } = useAdjacencyMatrix(nodes, edges);
+    // Adjacency Matrix
+    const { 
+      adjacencyMatrix, 
+      showMatrix, 
+      toggleMatrixView 
+    } = useAdjacencyMatrix(nodes, edges);
+
+    //Assignment Matrix
+    const { 
+      showAssignmentMatrix,
+      assignmentMatrix, 
+      hungarianAlgorithm,
+      optimizationMode,
+      toggleAssignmentMatrixView,
+      setOptimizationMode
+    } = useAssignmentMatrix(nodes, edges);
 
     // Event handlers
     const handleCanvasClick = (event) => {
@@ -234,7 +261,6 @@ export default {
     };
 
     const handleDrag = (event) => {
-      // Obtener el elemento DOM del SVG correctamente
       const svgElement = graphSvg.value?.svgElement || graphSvg.value?.$el?.querySelector('svg') || null;
       onDragRaw(event, zoomLevel.value, panX.value, panY.value, svgElement);
       continuePan(event, hasPanned);
@@ -277,7 +303,6 @@ export default {
     return {
       currentTheme,
       showHelp,
-      showSelector,
       importFileInput,
       graphSvg,
       nodes,
@@ -324,6 +349,12 @@ export default {
       adjacencyMatrix,
       showMatrix,
       toggleMatrixView,
+      showAssignmentMatrix,
+      assignmentMatrix,
+      hungarianAlgorithm,
+      optimizationMode,
+      toggleAssignmentMatrixView,
+      setOptimizationMode,
       clearCanvas,
       getEdgeValuePosition,
       updateFromJohnson
@@ -342,7 +373,7 @@ export default {
 .graph-editor-container {
   width: 90vw;
   max-width: 1600px;
-  aspect-ratio: 16 / 9;
+  /* aspect-ratio: 16 / 9; */
   display: flex;
   flex-direction: column;
   font-family: 'Oswald', sans-serif;
@@ -353,6 +384,7 @@ export default {
   position: relative;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 40px;
 }
 
 .light-theme .graph-editor-container { background-color: rgba(247, 243, 240, 1); color: #333; }
@@ -366,6 +398,7 @@ export default {
 
 .help-button {
   position: fixed;
+  right: 25px;
   width: 50px;
   height: 50px;
   border-radius: 50%;

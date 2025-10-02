@@ -1,8 +1,7 @@
 import { ref, computed } from 'vue';
 import { getNodeRadius } from '../utils/graphHelpers';
 
-let nextNodeId = 1;
-let nextEdgeId = 1;
+const generateUniqueId = () => Math.random().toString(36).substring(2, 9); 
 
 export function useGraphData() {
   const nodes = ref([]);
@@ -141,14 +140,14 @@ export function useGraphData() {
 
   const addNode = (x, y, shape) => {
     const newNode = {
-      id: nextNodeId++,
+      id: generateUniqueId(),
       x,
       y,
-      label: `N${nextNodeId - 1}`,
+      label: `N-${nodes.value.length + 1}`,
       type: 'node',
       shape,
-      color: '#629eff',
-      borderColor: '#3b2881'
+      color: '#ff74a9',
+      borderColor: '#a81a39'
     };
     nodes.value.push(newNode);
     return newNode;
@@ -156,7 +155,7 @@ export function useGraphData() {
 
   const addEdge = (fromId, toId) => {
     const newEdge = {
-      id: nextEdgeId++,
+      id: generateUniqueId(),
       from: fromId,
       to: toId,
       type: 'edge',
