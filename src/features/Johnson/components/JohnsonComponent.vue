@@ -202,6 +202,7 @@ const showSelector = ref(false);
 const canvasBackgroundStyle = ref('grid');
 const canvasBackgroundColor = ref(currentTheme.value === 'light-theme' ? '#ffffff' : '#333333');
 const isAddingEdge = ref(false);
+const isAddingNode = ref(false);  
 const edgeStartNode = ref(null);
 const isZoomEnabled = ref(false);
 const zoomLevel = ref(1);
