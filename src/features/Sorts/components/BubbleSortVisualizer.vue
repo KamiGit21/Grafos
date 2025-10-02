@@ -12,6 +12,7 @@
         <aside class="control-sidebar">
           <ControlPanel 
             @generate="generateArray"
+            @manual-input="handleManualInput"
             @sort="startSort"
             @import="importArray"
             @export="exportArray"
@@ -20,6 +21,8 @@
             :isSorting="isSorting"
             :isPaused="isPaused"
             :elapsedTime="elapsedTime"
+            :currentArray="originalArray"
+            :arrayParams="arrayParams"
           />
         </aside>
 
@@ -60,40 +63,65 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import Navbar from '../../../components/Navbar.vue';
 import ControlPanel from './ControlPanel.vue';
 import ArrayDisplay from './ArrayDisplay.vue';
 import BubbleAnimation from './BubbleAnimation.vue';
 
+// =============================================
+// CONFIGURACIÓN INICIAL Y ESTADO REACTIVO
+// =============================================
+
 const theme = ref(localStorage.getItem('data-theme') || 'light-theme');
 
-// Estado reactivo - INICIALMENTE VACÍO
-const originalArray = ref([]);
-const sortedArray = ref([]);
-const displayArray = ref([]);
-const arraySize = ref('');
-const minValue = ref('');
-const maxValue = ref('');
-const isSorting = ref(false);
-const isPaused = ref(false);
-const elapsedTime = ref(0);
-const currentIndex = ref(-1);
-const comparingIndices = ref([]);
-const swappingIndices = ref([]);
-const sortedIndices = ref([]);
-const selectedAlgorithm = ref('bubble');
-const sortDirection = ref(true);
-const animationSpeed = ref(500);
+// Estados principales para los arrays
+const originalArray = ref([]);        // Array original sin ordenar
+const sortedArray = ref([]);          // Array después del ordenamiento
+const displayArray = ref([]);         // Array que se muestra durante la animación
 
-// Timer
+// Estados del proceso de ordenamiento
+const isSorting = ref(false);         // Indica si se está ejecutando un algoritmo
+const isPaused = ref(false);          // Indica si el ordenamiento está en pausa
+const elapsedTime = ref(0);           // Tiempo transcurrido del ordenamiento
+
+// Estados para la visualización de animaciones
+const currentIndex = ref(-1);         // Índice actual siendo procesado
+const comparingIndices = ref([]);     // Índices que se están comparando
+const swappingIndices = ref([]);      // Índices que se están intercambiando
+const sortedIndices = ref([]);        // Índices que ya están ordenados
+
+// Configuración del algoritmo
+const selectedAlgorithm = ref('bubble');  // Algoritmo seleccionado
+const sortDirection = ref(true);          // true = ascendente, false = descendente
+const animationSpeed = ref(110);          // Velocidad de la animación en ms
+
+// Parámetros del array - gestionados de forma reactiva
+const arrayParams = reactive({
+  size: '',  // Cantidad de elementos
+  min: '',   // Valor mínimo
+  max: ''    // Valor máximo
+});
+
+// Valores para la visualización de burbujas
+const minValue = ref(0);
+const maxValue = ref(0);
+
+// Variables para el control del timer
 let timerInterval = null;
 let startTime = 0;
 
-// Generar parámetros aleatorios si no se especifican
+// =============================================
+// FUNCIONES DE GENERACIÓN DE ARRAYS
+// =============================================
+
+/**
+ * Genera parámetros aleatorios para el array
+ * @returns {Object} Objeto con size, min y max aleatorios
+ */
 const generateRandomParams = () => {
   const randomSize = Math.floor(Math.random() * 16) + 10; // 10-25 elementos
-  const randomMin = Math.floor(Math.random() * 50) + 1; // 1-50
+  const randomMin = Math.floor(Math.random() * 50) + 1;   // 1-50
   const randomMax = Math.floor(Math.random() * 200) + 100; // 100-300
   
   return {
@@ -103,49 +131,101 @@ const generateRandomParams = () => {
   };
 };
 
-// Generar array aleatorio
-const generateArray = (size = arraySize.value, min = minValue.value, max = maxValue.value) => {
-  // Si todos los parámetros están vacíos, generar parámetros aleatorios
+/**
+ * Genera un array basado en parámetros o aleatoriamente
+ * @param {number} size - Cantidad de elementos
+ * @param {number} min - Valor mínimo
+ * @param {number} max - Valor máximo
+ */
+const generateArray = (size = arrayParams.size, min = arrayParams.min, max = arrayParams.max) => {
+  let finalSize, finalMin, finalMax;
+  
+  // Caso 1: Generación completamente aleatoria (sin parámetros)
   if (size === '' && min === '' && max === '') {
     const randomParams = generateRandomParams();
-    size = randomParams.size;
-    min = randomParams.min;
-    max = randomParams.max;
+    finalSize = randomParams.size;
+    finalMin = randomParams.min;
+    finalMax = randomParams.max;
+    
+    // Actualizar parámetros con los valores aleatorios generados
+    arrayParams.size = finalSize;
+    arrayParams.min = finalMin;
+    arrayParams.max = finalMax;
+  } 
+  // Caso 2: Generación con parámetros específicos
+  else {
+    // Validar que todos los parámetros estén completos
+    if (size === '' || min === '' || max === '') {
+      alert('Para generar con parámetros, debes especificar Cantidad, Mínimo y Máximo');
+      return;
+    }
+    
+    finalSize = parseInt(size);
+    finalMin = parseInt(min);
+    finalMax = parseInt(max);
+    
+    // Actualizar parámetros con los valores proporcionados
+    arrayParams.size = finalSize;
+    arrayParams.min = finalMin;
+    arrayParams.max = finalMax;
   }
   
-  // Usar valores por defecto si están vacíos individualmente
-  const finalSize = size === '' ? 15 : size;
-  const finalMin = min === '' ? 10 : min;
-  const finalMax = max === '' ? 100 : max;
-  
-  // Validar que min < max
+  // Validación de parámetros
   if (finalMin >= finalMax) {
     alert('El valor mínimo debe ser menor que el valor máximo');
     return;
   }
   
-  arraySize.value = finalSize;
-  minValue.value = finalMin;
-  maxValue.value = finalMax;
-  
-  // Generar array desordenado
+  // Generar array con números aleatorios
   originalArray.value = Array.from({ length: finalSize }, 
     () => Math.floor(Math.random() * (finalMax - finalMin + 1)) + finalMin
   );
   
-  // Asegurar que esté desordenado mezclando
-  shuffleArray();
+  // Actualizar valores para la visualización
+  minValue.value = finalMin;
+  maxValue.value = finalMax;
   
+  // Mezclar el array y preparar el estado
+  shuffleArray();
   sortedArray.value = [];
   displayArray.value = [...originalArray.value];
   resetAnimationState();
 };
 
-// Función para desordenar el array
+/**
+ * Procesa y carga un array ingresado manualmente
+ * @param {Array} manualArray - Array de números a cargar
+ */
+const handleManualInput = (manualArray) => {
+  if (manualArray && manualArray.length > 0) {
+    originalArray.value = manualArray;
+    
+    // Calcular y actualizar parámetros basados en el array manual
+    arrayParams.size = manualArray.length;
+    arrayParams.min = Math.min(...manualArray);
+    arrayParams.max = Math.max(...manualArray);
+    
+    minValue.value = arrayParams.min;
+    maxValue.value = arrayParams.max;
+    
+    displayArray.value = [...manualArray];
+    sortedArray.value = [];
+    resetAnimationState();
+  }
+};
+
+// =============================================
+// FUNCIONES DE MANIPULACIÓN DE ARRAYS
+// =============================================
+
+/**
+ * Mezcla (shuffle) el array original
+ */
 const shuffleArray = () => {
   if (originalArray.value.length === 0) return;
   
   const shuffled = [...originalArray.value];
+  // Algoritmo Fisher-Yates para mezclar
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -156,7 +236,40 @@ const shuffleArray = () => {
   resetAnimationState();
 };
 
-// Resetear estado de animación
+/**
+ * Reinicia el array a su estado original (sin ordenar)
+ */
+const resetArray = () => {
+  resetAnimationState();
+  sortedArray.value = [];
+  displayArray.value = [...originalArray.value];
+};
+
+/**
+ * Limpia completamente todos los datos y parámetros
+ */
+const clearAll = () => {
+  resetAnimationState();
+  originalArray.value = [];
+  sortedArray.value = [];
+  displayArray.value = [];
+  
+  // Limpiar todos los parámetros
+  arrayParams.size = '';
+  arrayParams.min = '';
+  arrayParams.max = '';
+  
+  minValue.value = 0;
+  maxValue.value = 0;
+};
+
+// =============================================
+// FUNCIONES DE ANIMACIÓN Y CONTROL
+// =============================================
+
+/**
+ * Reinicia el estado de animación a sus valores iniciales
+ */
 const resetAnimationState = () => {
   currentIndex.value = -1;
   comparingIndices.value = [];
@@ -165,26 +278,32 @@ const resetAnimationState = () => {
   isSorting.value = false;
   isPaused.value = false;
   elapsedTime.value = 0;
+  
+  // Limpiar intervalo del timer si existe
   if (timerInterval) {
     clearInterval(timerInterval);
     timerInterval = null;
   }
 };
 
-// Cambiar algoritmo
-const changeAlgorithm = (algorithm) => {
-  selectedAlgorithm.value = algorithm;
+/**
+ * Pausa o reanuda el proceso de ordenamiento
+ */
+const pauseResumeSort = () => {
+  isPaused.value = !isPaused.value;
 };
 
-// Cambiar dirección
-const changeDirection = (direction) => {
-  sortDirection.value = direction;
-};
+// =============================================
+// ALGORITMOS DE ORDENAMIENTO
+// =============================================
 
-// Iniciar ordenamiento
+/**
+ * Inicia el proceso de ordenamiento con el algoritmo seleccionado
+ */
 const startSort = async () => {
   if (isSorting.value || originalArray.value.length === 0) return;
   
+  // Preparar estado inicial
   sortedArray.value = [];
   displayArray.value = [...originalArray.value];
   resetAnimationState();
@@ -192,26 +311,41 @@ const startSort = async () => {
   isSorting.value = true;
   startTime = Date.now();
   
+  // Iniciar timer para medir el tiempo de ejecución
   timerInterval = setInterval(() => {
     elapsedTime.value = (Date.now() - startTime) / 1000;
   }, 100);
   
   try {
+    const arrayCopy = [...originalArray.value];
+    
+    // Ejecutar el algoritmo seleccionado
     switch (selectedAlgorithm.value) {
       case 'bubble':
-        await bubbleSort([...originalArray.value], sortDirection.value);
+        await bubbleSort(arrayCopy, sortDirection.value);
         break;
       case 'selection':
-        await selectionSort([...originalArray.value], sortDirection.value);
+        await selectionSort(arrayCopy, sortDirection.value);
         break;
       case 'insertion':
-        await insertionSort([...originalArray.value], sortDirection.value);
+        await insertionSort(arrayCopy, sortDirection.value);
+        break;
+      case 'shell':
+        await shellSort(arrayCopy, sortDirection.value);
+        break;
+
+      case 'merge':
+        await mergeSort(arrayCopy, sortDirection.value);
         break;
     }
+    
+    // Guardar el resultado ordenado
+    sortedArray.value = arrayCopy;
   } catch (error) {
     console.error('Error durante el ordenamiento:', error);
   }
   
+  // Finalizar proceso
   isSorting.value = false;
   if (timerInterval) {
     clearInterval(timerInterval);
@@ -219,7 +353,11 @@ const startSort = async () => {
   }
 };
 
-// Algoritmo Bubble Sort optimizado (basado en el código C++ proporcionado)
+/**
+ * Algoritmo Bubble Sort optimizado
+ * @param {Array} arr - Array a ordenar
+ * @param {boolean} ascending - true para ascendente, false para descendente
+ */
 const bubbleSort = async (arr, ascending) => {
   const n = arr.length;
   let swapped;
@@ -228,18 +366,19 @@ const bubbleSort = async (arr, ascending) => {
     swapped = false;
     
     for (let j = 0; j < n - i - 1; j++) {
-      // Pausa si está en pausa
+      // Manejar pausa
       while (isPaused.value && isSorting.value) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
       if (!isSorting.value) return;
       
+      // Actualizar estado de animación
       currentIndex.value = j;
       comparingIndices.value = [j, j + 1];
-      
       await new Promise(resolve => setTimeout(resolve, animationSpeed.value));
       
+      // Determinar si se debe intercambiar
       const shouldSwap = ascending ? 
         arr[j] > arr[j + 1] : 
         arr[j] < arr[j + 1];
@@ -259,20 +398,23 @@ const bubbleSort = async (arr, ascending) => {
       comparingIndices.value = [];
     }
     
-    // Marcar elemento ordenado
+    // Marcar elemento como ordenado
     sortedIndices.value.push(n - i - 1);
     
-    // Si no hubo intercambios, el array está ordenado
+    // Optimización: si no hubo intercambios, el array está ordenado
     if (!swapped) break;
   }
   
-  // Marcar todos como ordenados
+  // Marcar todos como ordenados al finalizar
   sortedIndices.value = Array.from({ length: n }, (_, i) => i);
-  sortedArray.value = arr;
   currentIndex.value = -1;
 };
 
-// Algoritmo Selection Sort (basado en el código Java proporcionado)
+/**
+ * Algoritmo Selection Sort
+ * @param {Array} arr - Array a ordenar
+ * @param {boolean} ascending - true para ascendente, false para descendente
+ */
 const selectionSort = async (arr, ascending) => {
   const n = arr.length;
   
@@ -280,18 +422,19 @@ const selectionSort = async (arr, ascending) => {
     let minMaxIndex = i;
     
     for (let j = i + 1; j < n; j++) {
-      // Pausa si está en pausa
+      // Manejar pausa
       while (isPaused.value && isSorting.value) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
       if (!isSorting.value) return;
       
+      // Actualizar estado de animación
       currentIndex.value = j;
       comparingIndices.value = [minMaxIndex, j];
-      
       await new Promise(resolve => setTimeout(resolve, animationSpeed.value));
       
+      // Encontrar el índice del elemento mínimo/máximo
       const shouldUpdate = ascending ? 
         arr[j] < arr[minMaxIndex] : 
         arr[j] > arr[minMaxIndex];
@@ -313,17 +456,20 @@ const selectionSort = async (arr, ascending) => {
       swappingIndices.value = [];
     }
     
-    // Marcar elemento ordenado
+    // Marcar elemento como ordenado
     sortedIndices.value.push(i);
   }
   
   // Marcar último elemento como ordenado
   sortedIndices.value.push(n - 1);
-  sortedArray.value = arr;
   currentIndex.value = -1;
 };
 
-// Algoritmo Insertion Sort (basado en el código Java proporcionado)
+/**
+ * Algoritmo Insertion Sort
+ * @param {Array} arr - Array a ordenar
+ * @param {boolean} ascending - true para ascendente, false para descendente
+ */
 const insertionSort = async (arr, ascending) => {
   const n = arr.length;
   
@@ -331,16 +477,16 @@ const insertionSort = async (arr, ascending) => {
     const key = arr[i];
     let j = i - 1;
     
-    // Pausa si está en pausa
+    // Manejar pausa
     while (isPaused.value && isSorting.value) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     
     if (!isSorting.value) return;
     
+    // Actualizar estado de animación
     currentIndex.value = i;
     comparingIndices.value = [j, i];
-    
     await new Promise(resolve => setTimeout(resolve, animationSpeed.value));
     
     // Mover elementos mayores/menores que key
@@ -365,83 +511,279 @@ const insertionSort = async (arr, ascending) => {
     sortedIndices.value = Array.from({ length: i + 1 }, (_, idx) => idx);
   }
   
-  sortedArray.value = arr;
   currentIndex.value = -1;
   comparingIndices.value = [];
   swappingIndices.value = [];
 };
 
-// Pausar/Reanudar
-const pauseResumeSort = () => {
-  isPaused.value = !isPaused.value;
-};
 
-// Resetear array al estado original
-const resetArray = () => {
-  resetAnimationState();
-  sortedArray.value = [];
-  displayArray.value = [...originalArray.value];
-};
-
-// Borrar todo - NUEVA FUNCIÓN
-const clearAll = () => {
-  resetAnimationState();
-  originalArray.value = [];
-  sortedArray.value = [];
-  displayArray.value = [];
-  arraySize.value = '';
-  minValue.value = '';
-  maxValue.value = '';
-};
-
-// Importar array manualmente
-const importArray = (arrayString) => {
-  try {
-    const newArray = arrayString.split(',').map(num => parseInt(num.trim())).filter(num => !isNaN(num));
-    if (newArray.length > 0) {
-      originalArray.value = newArray;
-      arraySize.value = newArray.length;
-      minValue.value = Math.min(...newArray);
-      maxValue.value = Math.max(...newArray);
-      displayArray.value = [...newArray];
-      resetAnimationState();
-    } else {
-      alert('Por favor ingresa números válidos separados por comas.');
+const shellSort = async (arr, ascending) => {
+  const n = arr.length;
+  let h = 1;
+  
+  while (h < Math.floor(n / 3)) {
+    h = 3 * h + 1; //Tamaño de los saltos
+  }
+  
+  while (h >= 1) {
+    for (let i = h; i < n; i++) {
+      let temp = arr[i]; // Guardamos el valor a insertar
+      let j = i;
+      
+      while (j >= h) {
+        // Pausa si está en pausa
+        while (isPaused.value && isSorting.value) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        if (!isSorting.value) return;
+        
+        currentIndex.value = j;
+        comparingIndices.value = [j, j - h];
+        
+        await new Promise(resolve => setTimeout(resolve, animationSpeed.value));
+        
+        const shouldShift = ascending 
+          ? (j - h >= 0 && arr[j - h] > temp) 
+          : (j - h >= 0 && arr[j - h] < temp);
+        
+        if (!shouldShift) break;
+        
+        swappingIndices.value = [j, j - h];
+        arr[j] = arr[j - h]; // Desplazar elemento
+        j -= h;
+        
+        displayArray.value = [...arr];
+        await new Promise(resolve => setTimeout(resolve, animationSpeed.value / 2));
+        swappingIndices.value = [];
+      }
+      
+      arr[j] = temp; // Colocar el valor en su posición final
+      displayArray.value = [...arr];
+      
+      // Marcar como ordenado el subarray hasta i (aproximadamente)
+      if (h === 1) {
+        sortedIndices.value = Array.from({ length: i + 1 }, (_, idx) => idx);
+      }
     }
-  } catch (error) {
-    alert('Error al importar el array. Asegúrate de que esté en el formato correcto (ej: 64, 33, 229, 261).');
+    
+    h = Math.floor(h / 3); // Reducir el gap
+  }
+  
+  // Marcar todos como ordenados al final
+  sortedIndices.value = Array.from({ length: n }, (_, i) => i);
+  sortedArray.value = arr;
+  currentIndex.value = -1;
+};
+
+//Merge Sort
+const mergeSort = async (arr, ascending) => {
+  const aux = new Array(arr.length);
+  await mergeSortHelper(arr, aux, 0, arr.length - 1, ascending);
+  
+  // Marcar todos como ordenados al final
+  sortedIndices.value = Array.from({ length: arr.length }, (_, i) => i);
+  sortedArray.value = arr;
+  currentIndex.value = -1;
+};
+
+const mergeSortHelper = async (arr, aux, lo, hi, ascending) => {
+  if (lo >= hi) return;
+  
+  const mid = lo + Math.floor((hi - lo) / 2);
+  
+  await mergeSortHelper(arr, aux, lo, mid, ascending);
+  await mergeSortHelper(arr, aux, mid + 1, hi, ascending);
+  await mergeHelper(arr, aux, lo, mid, hi, ascending);
+
+  for (let idx = lo; idx <= hi; idx++) {
+    sortedIndices.value.push(idx);
+  }
+  sortedIndices.value = [...new Set(sortedIndices.value)];
+};
+
+const mergeHelper = async (arr, aux, lo, mid, hi, ascending) => {
+  for (let k = lo; k <= hi; k++) {
+    aux[k] = arr[k];
+  }
+  
+  let i = lo;
+  let j = mid + 1;
+  
+  for (let k = lo; k <= hi; k++) {
+    while (isPaused.value && isSorting.value) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    if (!isSorting.value) return;
+    
+    currentIndex.value = k;
+    
+    if (i <= mid && j <= hi) {
+      comparingIndices.value = [i, j];
+      await new Promise(resolve => setTimeout(resolve, animationSpeed.value));
+    }
+    
+    let fromIndex;
+    if (i > mid) {
+      arr[k] = aux[j];
+      fromIndex = j;
+      j++;
+    } else if (j > hi) {
+      arr[k] = aux[i];
+      fromIndex = i;
+      i++;
+    } else {
+      const shouldTakeJ = ascending 
+        ? aux[j] < aux[i] 
+        : aux[j] > aux[i];
+      
+      if (shouldTakeJ) {
+        arr[k] = aux[j];
+        fromIndex = j;
+        j++;
+      } else {
+        arr[k] = aux[i];
+        fromIndex = i;
+        i++;
+      }
+    }
+    
+    swappingIndices.value = [k, fromIndex];
+    displayArray.value = [...arr];
+    await new Promise(resolve => setTimeout(resolve, animationSpeed.value / 2));
+    
+    swappingIndices.value = [];
+    comparingIndices.value = [];
   }
 };
 
-// Exportar array
+
+
+
+// =============================================
+// FUNCIONES DE IMPORT/EXPORT
+// =============================================
+
+/**
+ * Importa un array desde un archivo JSON
+ */
+const importArray = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  
+  input.onchange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        
+        // Validar estructura del JSON
+        if (!data.array || !Array.isArray(data.array)) {
+          throw new Error('Formato JSON inválido: se esperaba un objeto con propiedad "array"');
+        }
+        
+        // Validar que todos los elementos sean números
+        const validArray = data.array.map(num => {
+          const parsed = Number(num);
+          if (isNaN(parsed)) {
+            throw new Error('El array contiene elementos no numéricos');
+          }
+          return parsed;
+        });
+        
+        if (validArray.length === 0) {
+          alert('El array importado está vacío');
+          return;
+        }
+        
+        handleManualInput(validArray);
+        alert(`Array importado exitosamente: ${validArray.length} elementos`);
+        
+      } catch (error) {
+        alert(`Error al importar el archivo: ${error.message}`);
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+  
+  input.click();
+};
+
+/**
+ * Exporta el array actual a un archivo JSON con nombre personalizado
+ */
 const exportArray = () => {
   if (originalArray.value.length === 0) {
     alert('No hay datos para exportar.');
     return;
   }
   
-  const arrayString = originalArray.value.join(', ');
-  navigator.clipboard.writeText(arrayString).then(() => {
-    alert('Array copiado al portapapeles: ' + arrayString);
-  }).catch(() => {
-    // Fallback para navegadores que no soportan clipboard
-    const textArea = document.createElement('textarea');
-    textArea.value = arrayString;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
-    alert('Array copiado: ' + arrayString);
-  });
+  // Solicitar nombre personalizado para el archivo
+  const fileName = prompt('Ingresa un nombre para el archivo (sin extensión):', `array_${new Date().getTime()}`) || `array_${new Date().getTime()}`;
+  
+  // Preparar datos para exportar
+  const data = {
+    array: originalArray.value,
+    metadata: {
+      size: originalArray.value.length,
+      min: Math.min(...originalArray.value),
+      max: Math.max(...originalArray.value),
+      exportDate: new Date().toISOString(),
+      algorithm: selectedAlgorithm.value,
+      sortDirection: sortDirection.value ? 'ascendente' : 'descendente'
+    }
+  };
+  
+  const dataStr = JSON.stringify(data, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  
+  // Crear enlace de descarga
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${fileName}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  
+  alert(`Array exportado exitosamente como "${fileName}.json"`);
 };
 
-// NO generar array automáticamente al montar
+// =============================================
+// CONFIGURACIÓN INICIAL
+// =============================================
+
+/**
+ * Cambia el algoritmo de ordenamiento
+ * @param {string} algorithm - Nombre del algoritmo
+ */
+const changeAlgorithm = (algorithm) => {
+  selectedAlgorithm.value = algorithm;
+};
+
+/**
+ * Cambia la dirección del ordenamiento
+ * @param {boolean} direction - true para ascendente, false para descendente
+ */
+const changeDirection = (direction) => {
+  sortDirection.value = direction;
+};
+
+// No generar array automáticamente al montar el componente
 onMounted(() => {
-  // No generar array automáticamente, dejar en blanco
+  // Estado inicial vacío
 });
 </script>
 
 <style scoped>
+/* Estilos permanecen iguales */
 .sorts-container {
   min-height: 100vh;
   font-family: 'Oswald', sans-serif;

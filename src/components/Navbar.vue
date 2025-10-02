@@ -42,7 +42,7 @@ export default {
     return {
       navItems: [
         { name: 'Home', route: '/' },
-        { name: 'Jhonson', route: '/johnson' },
+        { name: 'Johnson', route: '/johnson' },
         { name: 'Asignación', route: '/asignacion' },
         { name: 'Northwest', route: '/northwest' },
         { name: 'Sorts', route: '/sorts' }
