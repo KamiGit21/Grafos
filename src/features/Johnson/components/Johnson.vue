@@ -382,9 +382,9 @@ const exportJSON = () => {
     edges: props.edges, 
     nextNodeId: nextNodeIdLocal, 
     nextEdgeId: nextEdgeIdLocal, 
-    currentTheme: props.theme,
+    currentTheme: props.theme, // Usar props.theme directamente
     canvasBackgroundStyle: 'grid',
-    canvasBackgroundColor: props.theme === 'light-theme' ? '#ffffff' : '#333333',
+    canvasBackgroundColor: props.theme === 'light-theme' ? '#ffffff' : '#333333', // Lógica consistente
     zoomLevel: 1,
     panX: 0,
     panY: 0
