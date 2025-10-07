@@ -78,11 +78,9 @@
 
     <MatrixModal
       v-if="showMatrix"
-      :nodes="classifiedNodes.sources"
-      :destinations="classifiedNodes.destinations"
-      :assignment-matrix="assignmentMatrix"
+      :nodes="nodes"
+      :adjacency-matrix="adjacencyMatrix"
       :current-theme="currentTheme"
-      :optimization-mode="optimizationMode"
       @close="toggleMatrixView"
     />
 
@@ -253,8 +251,9 @@ export default {
 
         // Adjacency Matrix
         const { 
-            showMatrix, 
-            toggleMatrixView 
+          adjacencyMatrix, 
+          showMatrix, 
+          toggleMatrixView 
         } = useAdjacencyMatrix(nodes, edges);
 
         const handleCanvasClick = (event) => {
@@ -365,6 +364,7 @@ export default {
             triggerImportJSON,
             importJSON,
             // Matrices
+            adjacencyMatrix,
             showMatrix,
             toggleMatrixView,
             optimizationMode,

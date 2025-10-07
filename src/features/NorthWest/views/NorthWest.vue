@@ -167,11 +167,11 @@ const solveMaximize = () => {
 }
 
 .light-theme {
-  color: #333;
+  color: #ffffff;
 }
 
 .dark-theme {
-  color: #e0e0e0;
+  color: #333;
 }
 
 .main-content {
