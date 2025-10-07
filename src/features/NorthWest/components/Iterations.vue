@@ -271,6 +271,7 @@ const previousIteration = () => {
   border-radius: 4px;
   background: rgba(224, 201, 182, 0.2);
   outline: none;
+  appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
 }
@@ -572,8 +573,8 @@ const previousIteration = () => {
 }
 
 .dark-theme .final-result {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.12));
-  border-color: rgba(76, 175, 80, 0.5);
+  background: linear-gradient(135deg, rgba(76, 175, 162, 0.3), rgba(76, 175, 80, 0.2));
+  border-color: rgba(76, 175, 167, 0.4);
 }
 
 .dark-theme .result-item {
@@ -584,7 +585,10 @@ const previousIteration = () => {
 .dark-theme .result-label {
   color: #c9b4a4;
 }
-
+ .dark-theme .iteration-counter {
+  background: rgba(201, 168, 135, 0.3);
+  color: #c9b4a4;
+}
 /* Scrollbar */
 .table-wrapper::-webkit-scrollbar {
   width: 8px;

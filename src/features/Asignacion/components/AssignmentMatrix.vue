@@ -504,6 +504,7 @@ const formatValue = (value) => {
   border-radius: 3px;
   background: rgba(224, 201, 182, 0.2);
   outline: none;
+  appearance: none;
   -webkit-appearance: none;
 }
 
@@ -1042,8 +1043,8 @@ const formatValue = (value) => {
 }
 
 .dark-theme .solution-section {
-  background: rgba(76, 175, 80, 0.15);
-  border-color: rgba(76, 175, 80, 0.4);
+  background: rgba(76, 175, 170, 0.15);
+  border-color: rgba(76, 175, 109, 0.4);
 }
 
 .dark-theme .assignment-item {
@@ -1058,16 +1059,20 @@ const formatValue = (value) => {
 .dark-theme .from-node {
   background: linear-gradient(135deg, rgba(33, 150, 243, 0.3), rgba(33, 150, 243, 0.2));
   border-color: rgba(33, 150, 243, 0.4);
+  color: rgba(255, 255, 255, 0.61);
 }
 
 .dark-theme .to-node {
   background: linear-gradient(135deg, rgba(156, 39, 176, 0.3), rgba(156, 39, 176, 0.2));
   border-color: rgba(156, 39, 176, 0.4);
+  color: rgba(255, 255, 255, 0.61);
 }
-
+.dark-theme .cost-label {
+  color: #88a77f;
+}
 .dark-theme .assignment-cost {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.2));
-  border-color: rgba(76, 175, 80, 0.4);
+  background: linear-gradient(135deg, rgba(76, 175, 162, 0.3), rgba(76, 175, 80, 0.2));
+  border-color: rgba(76, 175, 167, 0.4);
 }
 
 /* Scrollbar */
