@@ -1,5 +1,5 @@
 export function useNorthWestExport(sources, destinations, supply, demand, costs) {
-  const exportJSON = () => {
+  const exportJSON = (filename) => {
     const data = {
       sources: sources.value,
       destinations: destinations.value,
@@ -14,7 +14,7 @@ export function useNorthWestExport(sources, destinations, supply, demand, costs)
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `northwest-${Date.now()}.json`;
+    a.download = filename || `northwest-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

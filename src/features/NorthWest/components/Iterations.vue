@@ -12,7 +12,7 @@
       <!-- Control de iteraciones -->
       <div class="iteration-controls">
         <div class="iteration-header">
-          <h3>Iteraciones del Método Simplex de Transporte</h3>
+          <h3>Iteraciones del Método Northwest Corner</h3>
           <span class="iteration-counter">
             Iteración {{ currentIteration + 1 }} / {{ iterations.length }}
           </span>
@@ -52,7 +52,7 @@
           <span class="cost-label">
             {{ optimizationMode === 'minimize' ? 'Costo Total (Z):' : 'Beneficio Total (Z):' }}
           </span>
-          <span class="cost-value">{{ currentIterationData.totalCost?.toFixed(2) || 0 }}</span>
+          <span class="cost-value">{{ formatCost(currentIterationData.totalCost) }}</span>
         </div>
       </div>
 
@@ -77,7 +77,7 @@
                   :key="'c-' + j"
                   :class="['matrix-cell', { 'has-value': value > 0 }]"
                 >
-                  {{ value > 0 ? value.toFixed(2) : '-' }}
+                  {{ value > 0 ? formatNumber(value) : '-' }}
                 </td>
               </tr>
             </tbody>
@@ -98,7 +98,7 @@
             <span class="result-label">
               {{ optimizationMode === 'minimize' ? 'Costo Mínimo:' : 'Beneficio Máximo:' }}
             </span>
-            <span class="result-value">{{ currentIterationData.totalCost?.toFixed(2) }}</span>
+            <span class="result-value">{{ formatCost(currentIterationData.totalCost) }}</span>
           </div>
           <div class="result-item">
             <span class="result-label">Iteraciones:</span>
@@ -150,6 +150,17 @@ const previousIteration = () => {
   if (currentIteration.value > 0) {
     currentIteration.value--;
   }
+};
+
+// Función para formatear números
+const formatNumber = (value) => {
+  return Number(value).toFixed(2);
+};
+
+// Función para formatear costos
+const formatCost = (cost) => {
+  if (cost === undefined || cost === null) return '0.00';
+  return Number(cost).toFixed(2);
 };
 </script>
 
@@ -585,10 +596,12 @@ const previousIteration = () => {
 .dark-theme .result-label {
   color: #c9b4a4;
 }
- .dark-theme .iteration-counter {
+
+.dark-theme .iteration-counter {
   background: rgba(201, 168, 135, 0.3);
   color: #c9b4a4;
 }
+
 /* Scrollbar */
 .table-wrapper::-webkit-scrollbar {
   width: 8px;

@@ -10,13 +10,13 @@
         <h3>Configuración de la Matriz de Transporte</h3>
       </div>
       <div class="matrix-actions">
-        <button @click="$emit('add-source')" class="btn-add">
+        <button @click="handleAddSource" class="btn-add">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
           Origen
         </button>
-        <button @click="$emit('add-destination')" class="btn-add">
+        <button @click="handleAddDestination" class="btn-add">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
@@ -96,21 +96,23 @@
             >
               <input
                 type="number"
-                :value="costs[i][j]"
-                @input="$event.target.value = Math.max(0, $event.target.value); $emit('update-cost', i, j, $event.target.value)"
+                :value="getCostValue(i, j)"
+                @input="handleCostUpdate(i, j, $event.target.value)"
                 class="cost-input"
                 min="0"
                 step="0.01"
+                placeholder="0"
               />
             </td>
             <td class="supply-cell">
               <input
                 type="number"
-                :value="supply[i]"
-                @input="$event.target.value = Math.max(0, $event.target.value); $emit('update-supply', i, $event.target.value)"
+                :value="getSupplyValue(i)"
+                @input="handleSupplyUpdate(i, $event.target.value)"
                 class="supply-input"
                 min="0"
                 step="0.01"
+                placeholder="0"
               />
             </td>
           </tr>
@@ -123,11 +125,12 @@
             >
               <input
                 type="number"
-                :value="dem"
-                @input="$event.target.value = Math.max(0, $event.target.value); $emit('update-demand', j, $event.target.value)"
+                :value="getDemandValue(j)"
+                @input="handleDemandUpdate(j, $event.target.value)"
                 class="demand-input"
                 min="0"
                 step="0.01"
+                placeholder="0"
               />
             </td>
             <td class="total-cell">
@@ -160,7 +163,7 @@ const props = defineProps({
   theme: String
 });
 
-defineEmits([
+const emit = defineEmits([
   'update-source-name',
   'update-destination-name',
   'update-supply',
@@ -172,21 +175,62 @@ defineEmits([
   'remove-destination'
 ]);
 
+// Funciones para manejar valores que podrían ser undefined o null
+const getCostValue = (i, j) => {
+  return props.costs[i]?.[j] ?? 0;
+};
+
+const getSupplyValue = (i) => {
+  return props.supply[i] ?? 0;
+};
+
+const getDemandValue = (j) => {
+  return props.demand[j] ?? 0;
+};
+
+// Funciones para manejar actualizaciones asegurando valores numéricos
+const handleCostUpdate = (i, j, value) => {
+  const numValue = parseFloat(value) || 0;
+  emit('update-cost', i, j, numValue);
+};
+
+const handleSupplyUpdate = (i, value) => {
+  const numValue = parseFloat(value) || 0;
+  emit('update-supply', i, numValue);
+};
+
+const handleDemandUpdate = (j, value) => {
+  const numValue = parseFloat(value) || 0;
+  emit('update-demand', j, numValue);
+};
+
+// Funciones para agregar fuentes y destinos
+const handleAddSource = () => {
+  emit('add-source');
+};
+
+const handleAddDestination = () => {
+  emit('add-destination');
+};
+
 const totalSupply = computed(() => {
-  return props.supply.reduce((a, b) => a + b, 0).toFixed(2);
+  const total = props.supply?.reduce((a, b) => a + (b || 0), 0) || 0;
+  return total.toFixed(2);
 });
 
 const totalDemand = computed(() => {
-  return props.demand.reduce((a, b) => a + b, 0).toFixed(2);
+  const total = props.demand?.reduce((a, b) => a + (b || 0), 0) || 0;
+  return total.toFixed(2);
 });
 
 const isBalanced = computed(() => {
-  return Math.abs(parseFloat(totalSupply.value) - parseFloat(totalDemand.value)) < 0.01;
+  const supplyTotal = parseFloat(totalSupply.value);
+  const demandTotal = parseFloat(totalDemand.value);
+  return Math.abs(supplyTotal - demandTotal) < 0.01;
 });
 </script>
 
 <style scoped>
-
 .matrix-editor {
   background: rgba(255, 255, 255, 1);
   border-bottom-left-radius: 16px;
@@ -566,6 +610,20 @@ const isBalanced = computed(() => {
 .dark-theme .demand-header {
   background: linear-gradient(90deg, rgba(70, 70, 70, 1), rgba(70, 70, 70, 1));
   color: #c9b4a4;
+}
+
+/* Placeholder styling */
+.cost-input::placeholder,
+.supply-input::placeholder,
+.demand-input::placeholder {
+  color: rgba(107, 89, 64, 0.4);
+  font-weight: 400;
+}
+
+.dark-theme .cost-input::placeholder,
+.dark-theme .supply-input::placeholder,
+.dark-theme .demand-input::placeholder {
+  color: rgba(201, 180, 164, 0.4);
 }
 
 /* Scrollbar */

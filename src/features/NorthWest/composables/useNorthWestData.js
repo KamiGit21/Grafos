@@ -3,12 +3,12 @@ import { ref } from 'vue';
 export function useNorthWestData() {
   const sources = ref(['Origen 1', 'Origen 2', 'Origen 3']);
   const destinations = ref(['Destino 1', 'Destino 2', 'Destino 3']);
-  const supply = ref([20, 30, 25]);
-  const demand = ref([15, 25, 35]);
+  const supply = ref([0, 0, 0]);
+  const demand = ref([0, 0, 0]);
   const costs = ref([
-    [4, 8, 8],
-    [16, 24, 16],
-    [8, 16, 24]
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0]
   ]);
 
   const addSource = () => {
