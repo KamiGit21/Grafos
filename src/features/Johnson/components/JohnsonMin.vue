@@ -12,12 +12,12 @@
           <p><strong>Duración mínima del proyecto:</strong> {{ Math.round(projectDuration) }}</p>
           <p><strong>Camino mínimo:</strong> {{ minPath.join(' → ') }}</p>
           <p><strong>Nodos en camino mínimo:</strong> {{ minPathNodes.join(', ') }}</p>
-          <p v-if="hasCycles">¡Advertencia! El grafo tiene ciclos. Los resultados pueden ser inexactos.</p>
+          <p v-if="hasCycles" class="warning-text">Advertencia: El grafo tiene ciclos. Los resultados pueden ser inexactos.</p>
         </div>
         <svg class="graph-svg" ref="graphSvgJohnson" @wheel.prevent="handleWheel" @mousedown.self="startPan" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag">
           <g :transform="`translate(${panX}, ${panY}) scale(${zoomLevel})`">
             <defs>
-              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <marker id="arrow-min" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" :fill="arrowColor"></path>
               </marker>
             </defs>
@@ -25,10 +25,10 @@
             <g v-for="edge in edgesWithCoords" :key="edge.id">
               <path
                 :d="edge.pathData"
-                :stroke="edge.color || '#555'"
-                stroke-width="2"
+                :stroke="edge.isInMinPath ? '#2563eb' : (edge.color || edgeDefaultColor)"
+                :stroke-width="edge.isInMinPath ? '3' : '2'"
                 fill="none"
-                :marker-end="'url(#arrow)'"
+                :marker-end="'url(#arrow-min)'"
                 :class="{ 'min-path': edge.isInMinPath }"
               />
               <text
@@ -52,8 +52,21 @@
             <g v-for="node in augmentedNodes" :key="node.id"  
               :transform="`translate(${node.x}, ${node.y})`"
               :class="['node-group', node.shape, { 'min-path-node': node.isInMinPath }]">
-              <circle v-if="node.shape === 'circle'" :r="getNodeRadius(node)" :fill="node.color" :stroke="node.borderColor" stroke-width="2"/>
-              <ellipse v-else :rx="getNodeEllipseRx(node)" ry="25" :fill="node.color" :stroke="node.borderColor" stroke-width="2"/>
+              <circle 
+                v-if="node.shape === 'circle'" 
+                :r="getNodeRadius(node)" 
+                :fill="node.isInMinPath ? minPathNodeFill : node.color" 
+                :stroke="node.isInMinPath ? '#2563eb' : node.borderColor" 
+                :stroke-width="node.isInMinPath ? '3' : '2'"
+              />
+              <ellipse 
+                v-else 
+                :rx="getNodeEllipseRx(node)" 
+                ry="25" 
+                :fill="node.isInMinPath ? minPathNodeFill : node.color" 
+                :stroke="node.isInMinPath ? '#2563eb' : node.borderColor" 
+                :stroke-width="node.isInMinPath ? '3' : '2'"
+              />
               <text class="node-label" text-anchor="middle" y="-20">{{ node.label }}</text>
               <text text-anchor="middle" y="5" font-size="12">{{ Math.round(node.ef) }} | {{ isFinite(node.lf) ? Math.round(node.lf) : '∞' }}</text>
               <text text-anchor="middle" y="25" font-size="12" class="node-slack-label">h={{ Math.round(node.slack) }}</text>
@@ -68,11 +81,28 @@
       </main>
 
       <footer class="johnson-modal-footer">
-        <button @click="exportJSON">Exportar JSON</button>
-        <button @click="triggerImportJSON">Importar JSON</button>
+        <button @click="exportJSON" class="footer-btn">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15V19C21 20.1046 20.7893 21 19 21H5C3.89543 21 3 20.1046 3 19V15" stroke="currentColor" stroke-width="2"/>
+            <path d="M7 10L12 15L17 10M12 15V3" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <span>Exportar JSON</span>
+        </button>
+        <button @click="triggerImportJSON" class="footer-btn">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15V19C21 20.1046 20.7893 21 19 21H5C3.89543 21 3 20.1046 3 19V15" stroke="currentColor" stroke-width="2"/>
+            <path d="M17 10L12 5L7 10M12 5V17" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <span>Importar JSON</span>
+        </button>
         <input type="file" ref="importFileInputJohnson" @change="importJSON" accept=".json" style="display: none;" />
-        <button @click="clearAndClose">Eliminar todo y cerrar</button>
-        <button @click="closeModal">Cerrar</button>
+        <button @click="clearAndClose" class="footer-btn danger-btn">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <span>Eliminar todo y cerrar</span>
+        </button>
+        <button @click="closeModal" class="footer-btn primary-btn">Cerrar</button>
       </footer>
     </div>
   </div>
@@ -98,7 +128,9 @@ const props = defineProps({
   }
 });
 
-const arrowColor = computed(() => props.theme === 'light-theme' ? '#555' : '#ccc');
+const arrowColor = computed(() => props.theme === 'light-theme' ? '#8b7355' : '#c9b4a4');
+const edgeDefaultColor = computed(() => props.theme === 'light-theme' ? '#8b7355' : '#c9b4a4');
+const minPathNodeFill = computed(() => props.theme === 'light-theme' ? 'rgba(37, 99, 235, 0.15)' : 'rgba(59, 130, 246, 0.25)');
 
 const inDegrees = computed(() => {
   const deg = {};
@@ -216,11 +248,10 @@ const minPath = computed(() => {
     const outgoingEdges = props.edges.filter(e => e.from === node.id);
     const zeroSlackEdges = outgoingEdges.filter(edge => {
       const edgeSlack = (lfMap.value.get(edge.to) || 0) - (efMap.value.get(edge.from) || 0) - (Number(edge.value) || 0);
-      return Math.abs(edgeSlack) < 0.001; // Considerar cero con tolerancia
+      return Math.abs(edgeSlack) < 0.001;
     });
     
     if (zeroSlackEdges.length > 0) {
-      // Seguir por la primera arista con holgura cero
       const nextEdge = zeroSlackEdges[0];
       const nextNode = props.nodes.find(n => n.id === nextEdge.to);
       if (nextNode) {
@@ -259,7 +290,7 @@ const augmentedNodes = computed(() => {
 const augmentedEdges = computed(() => {
   return props.edges.map(e => {
     const slack = (lfMap.value.get(e.to) || 0) - (efMap.value.get(e.from) || 0) - (Number(e.value) || 0);
-    const isInMinPath = Math.abs(slack) < 0.001; // Considerar cero con tolerancia
+    const isInMinPath = Math.abs(slack) < 0.001;
     
     return {
       ...e,
@@ -486,23 +517,7 @@ const clearAndClose = () => {
 </script>
 
 <style scoped>
-.node-slack-label {
-  font-size: 12px;
-  fill: v-bind('theme === "light-theme" ? "#1a73e8" : "#8ab4f8"');
-  pointer-events: none;
-}
-
-.min-path {
-  stroke: blue !important;
-  stroke-width: 3 !important;
-}
-
-.min-path-node circle, .min-path-node ellipse {
-  fill: rgba(0, 0, 255, 0.2) !important;
-  stroke: blue !important;
-  stroke-width: 3 !important;
-}
-
+/* Tema Base */
 .johnson-modal-overlay {
   position: fixed;
   top: 0;
@@ -514,6 +529,7 @@ const clearAndClose = () => {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .johnson-modal-content {
@@ -525,23 +541,58 @@ const clearAndClose = () => {
   border-radius: 12px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
   overflow: hidden;
-  background-color: v-bind('theme === "light-theme" ? "#f9f9f9" : "#3a3a3a"');
-  border: 2px solid v-bind('theme === "light-theme" ? "#4a90e2" : "#6ab0ff"');
 }
 
+/* Tema Claro */
+.light-theme .johnson-modal-content  {
+  background: linear-gradient(180deg, rgba(253, 246, 236, 0.98) 0%, rgba(248, 238, 226, 0.95) 100%);
+  border: 2px solid #c9a887;
+}
+
+/* Tema Oscuro */
+.dark-theme .johnson-modal-content {
+  background: linear-gradient(180deg, rgba(44, 44, 44, 0.98) 0%, rgba(35, 35, 35, 0.95) 100%);
+  border: 2px solid #242a31;
+}
+
+/* Header */
 .johnson-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 15px 25px;
   flex-shrink: 0;
-  border-bottom: 1px solid v-bind('theme === "light-theme" ? "#e0e0e0" : "#555"');
+}
+
+.light-theme .johnson-modal-header {
+  background: rgba(255, 249, 242, 0.9);
+  border-bottom: 1px solid rgba(224, 201, 182, 0.3);
+}
+
+.dark-theme .johnson-modal-header {
+  background: rgba(58, 58, 58, 0.9);
+  border-bottom: 1px solid #555;
 }
 
 .johnson-modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: v-bind('theme === "light-theme" ? "#333" : "#e0e0e0"');
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.light-theme .johnson-modal-header h2 {
+  background: linear-gradient(135deg, #8b7355 0%, #c9a887 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark-theme .johnson-modal-header h2 {
+  background: linear-gradient(135deg, #c9b4a4 0%, #e0c9b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .close-button {
@@ -551,13 +602,30 @@ const clearAndClose = () => {
   font-weight: bold;
   cursor: pointer;
   line-height: 1;
-  color: v-bind('theme === "light-theme" ? "#888" : "#bbb"');
+  transition: all 0.3s ease;
+}
+
+.light-theme .close-button {
+  color: #888;
+}
+
+.dark-theme .close-button {
+  color: #bbb;
 }
 
 .close-button:hover {
-  color: v-bind('theme === "light-theme" ? "#000" : "#fff"');
+  transform: rotate(90deg);
 }
 
+.light-theme .close-button:hover {
+  color: #000;
+}
+
+.dark-theme .close-button:hover {
+  color: #fff;
+}
+
+/* Body */
 .johnson-modal-body {
   flex-grow: 1;
   overflow: hidden;
@@ -566,68 +634,298 @@ const clearAndClose = () => {
   flex-direction: column;
 }
 
-.info-panel {
-  padding: 10px;
-  background: v-bind('theme === "light-theme" ? "rgba(255,255,255,0.8)" : "rgba(58, 58, 58, 0.9)"');
-  border-radius: 5px;
-  margin-bottom: 10px;
-  text-align: center;
-  border: 1px solid v-bind('theme === "light-theme" ? "#ddd" : "#555"');
-  color: v-bind('theme === "light-theme" ? "#333" : "#e0e0e0"');
+.johnson-modal-body p {
+  color: #2c2c2c;
 }
 
+.dark-theme .johnson-modal-body p {
+  color: #e0e0e0;
+}
+
+.dark-theme .johnson-modal-body {
+  background-color: #333;
+}
+
+/* Info Panel */
+.info-panel {
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.light-theme .info-panel {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(224, 201, 182, 0.4);
+  color: #333;
+}
+
+.dark-theme .info-panel {
+  background: rgba(58, 58, 58, 0.95);
+  border: 1px solid #555;
+  color: #e0e0e0;
+}
+
+.info-panel p {
+  margin: 6px 0;
+}
+
+
+.warning-text {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+/* SVG Graph */
 .graph-svg {
   flex-grow: 1;
   width: 100%;
   height: 100%;
-  background-color: v-bind('theme === "light-theme" ? "#ffffff" : "#2a2a2a"');
-  border-radius: 5px;
-  border: 2px solid v-bind('theme === "light-theme" ? "#4a90e2" : "#6ab0ff"');
+  border-radius: 8px;
+  cursor: grab;
 }
 
-.edge-label, .edge-slack-label {
+.graph-svg:active {
+  cursor: grabbing;
+}
+
+.light-theme .graph-svg {
+  background-color: #ffffff;
+  border: 2px solid #c9a887;
+}
+
+.dark-theme .graph-svg {
+  background-color: #2a2a2a;
+  border: 2px solid #3a4b5f;
+}
+
+/* Edge Labels */
+.edge-label {
   font-size: 12px;
-  fill: v-bind('theme === "light-theme" ? "#333" : "#e0e0e0"');
-  pointer-events: none;
   font-weight: bold;
+  pointer-events: none;
+}
+
+.light-theme .edge-label {
+  fill: #333;
+}
+
+.dark-theme .edge-label {
+  fill: #e0e0e0;
 }
 
 .edge-slack-label {
-  fill: v-bind('theme === "light-theme" ? "#1a73e8" : "#8ab4f8"');
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
 }
 
+.light-theme .edge-slack-label {
+  fill: #1a73e8;
+}
+
+.dark-theme .edge-slack-label {
+  fill: #8ab4f8;
+}
+
+/* Node Labels */
 .node-label {
   font-weight: bold;
-  fill: v-bind('theme === "light-theme" ? "#000" : "#fff"');
-  pointer-events: none;
   font-size: 14px;
+  pointer-events: none;
+}
+
+.light-theme .node-label {
+  fill: #000;
+}
+
+.dark-theme .node-label {
+  fill: #fff;
+}
+
+.node-slack-label {
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.light-theme .node-slack-label {
+  fill: #1a73e8;
+}
+
+.dark-theme .node-slack-label {
+  fill: #8ab4f8;
 }
 
 .node-group {
   pointer-events: none;
 }
 
+/* Camino Mínimo */
+.min-path {
+  stroke: #2563eb !important;
+  stroke-width: 3 !important;
+  filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.5));
+  animation: pulse-path 2s ease-in-out infinite;
+}
+
+@keyframes pulse-path {
+  0%, 100% {
+    stroke-opacity: 1;
+  }
+  50% {
+    stroke-opacity: 0.7;
+  }
+}
+
+.min-path-node circle,
+.min-path-node ellipse {
+  stroke: #2563eb !important;
+  stroke-width: 3 !important;
+  filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.4));
+}
+
+/* Footer */
 .johnson-modal-footer {
   padding: 15px;
   text-align: center;
   flex-shrink: 0;
-  border-top: 1px solid v-bind('theme === "light-theme" ? "#e0e0e0" : "#555"');
-  background-color: v-bind('theme === "light-theme" ? "#f9f9f9" : "#3a3a3a"');
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.johnson-modal-footer button {
+.light-theme .johnson-modal-footer {
+  background: rgba(255, 249, 242, 0.9);
+  border-top: 1px solid rgba(224, 201, 182, 0.3);
+}
+
+.dark-theme .johnson-modal-footer {
+  background: rgba(58, 58, 58, 0.9);
+  border-top: 1px solid #555;
+}
+
+.footer-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 20px;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s;
-  background-color: v-bind('theme === "light-theme" ? "#f0f0f0" : "#4f4f4f"');
-  border: 1px solid v-bind('theme === "light-theme" ? "#ccc" : "#666"');
-  color: v-bind('theme === "light-theme" ? "#333" : "#e0e0e0"');
-  margin: 0 5px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid;
+  position: relative;
+  overflow: hidden;
 }
 
-.johnson-modal-footer button:hover {
-  background-color: v-bind('theme === "light-theme" ? "#e0e0e0" : "#5a5a5a"');
+.footer-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.footer-btn:hover::before {
+  left: 100%;
+}
+
+.footer-btn svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s ease;
+}
+
+.footer-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.light-theme .footer-btn {
+  background: rgba(255, 249, 242, 0.9);
+  border-color: rgba(224, 201, 182, 0.5);
+  color: #8b7355;
+}
+
+.dark-theme .footer-btn {
+  background: rgba(58, 58, 58, 0.9);
+  border-color: rgba(70, 70, 70, 0.5);
+  color: #c9b4a4;
+}
+
+.light-theme .footer-btn:hover {
+  background: rgba(243, 232, 221, 0.95);
+  border-color: rgba(201, 168, 135, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 115, 85, 0.15);
+}
+
+.dark-theme .footer-btn:hover {
+  background: rgba(74, 74, 74, 0.95);
+  border-color: rgba(139, 115, 85, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(201, 180, 164, 0.15);
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #8b7355 0%, #c9a887 100%) !important;
+  border-color: #a08970 !important;
+  color: white !important;
+}
+
+.light-theme .primary-btn:hover {
+  background: linear-gradient(135deg, #7a6449 0%, #b89776 100%) !important;
+  box-shadow: 0 4px 12px rgba(139, 115, 85, 0.3);
+}
+
+.dark-theme .primary-btn {
+  background: linear-gradient(135deg, #c9b4a4 0%, #e0c9b6 100%) !important;
+  border-color: #d4baaa !important;
+  color: #2a2a2a !important;
+}
+
+.dark-theme .primary-btn:hover {
+  background: linear-gradient(135deg, #b8a394 0%, #cfb8a6 100%) !important;
+}
+
+.danger-btn {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+  border-color: #b91c1c !important;
+  color: white !important;
+}
+
+.danger-btn:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%) !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .johnson-modal-content {
+    width: 95%;
+    height: 95%;
+  }
+
+  .johnson-modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .footer-btn span {
+    display: none;
+  }
+
+  .footer-btn {
+    padding: 10px;
+  }
+
+  .info-panel {
+    font-size: 12px;
+  }
 }
 </style>

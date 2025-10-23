@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { getNodeRadius } from '../utils/graphHelpers';
+import { validateEdgeCreation, showEdgeValidationError, validateDirectionChange } from '../utils/graphValidations';
 
 export function useGraphInteractions(graphDataComposable) {
   const {
@@ -13,7 +14,8 @@ export function useGraphInteractions(graphDataComposable) {
     addEdge,
     selectElement,
     deselectElement,
-    removeElement
+    removeElement,
+    getNodeLabel
   } = graphDataComposable;
 
   const isAddingNode = ref(false);
@@ -90,7 +92,23 @@ export function useGraphInteractions(graphDataComposable) {
       if (!edgeStartNode.value) {
         edgeStartNode.value = node;
       } else {
+        // Validar antes de crear la arista
+        const validation = validateEdgeCreation(
+          edgeStartNode.value.id,
+          node.id,
+          edges.value,
+          getNodeLabel
+        );
+
+        if (!validation.valid) {
+          showEdgeValidationError(validation.error, validation.message, getNodeLabel);
+          edgeStartNode.value = null;
+          return;
+        }
+
+        // Si la validación pasa, crear la arista dirigida por defecto
         const newEdge = addEdge(edgeStartNode.value.id, node.id);
+        newEdge.directed = true; // Forzar que sea dirigida
         edgeStartNode.value = null;
         selectElement(newEdge);
         isEditing.value = true;
@@ -135,7 +153,6 @@ export function useGraphInteractions(graphDataComposable) {
     }
 
     if (draggedHandle.value && graphSvgRef) {
-      // graphSvgRef debe ser el elemento DOM del <svg>
       const svgRect = graphSvgRef.getBoundingClientRect();
       const svgX = (event.clientX - svgRect.left) / zoomLevel - panX;
       const svgY = (event.clientY - svgRect.top) / zoomLevel - panY;
@@ -193,6 +210,21 @@ export function useGraphInteractions(graphDataComposable) {
   const flipSelectedEdgeDirection = () => {
     if (selectedElement.value?.type === 'edge' && selectedElement.value.directed) {
       const edge = selectedElement.value;
+      
+      // Validar si se puede invertir la dirección
+      const validation = validateEdgeCreation(
+        edge.to,
+        edge.from,
+        edges.value.filter(e => e.id !== edge.id),
+        getNodeLabel
+      );
+
+      if (!validation.valid) {
+        showEdgeValidationError(validation.error, validation.message, getNodeLabel);
+        return;
+      }
+
+      // Si la validación pasa, invertir
       [edge.from, edge.to] = [edge.to, edge.from];
     }
   };
@@ -201,14 +233,50 @@ export function useGraphInteractions(graphDataComposable) {
     if (!selectedElement.value || selectedElement.value.type !== 'edge') return;
     const direction = event.target.value;
     const edge = selectedElement.value;
+    
+    // Determinar la nueva configuración
+    let newFromId, newToId, newDirected;
+    
     if (direction === 'none') {
-      edge.directed = false;
+      // No se permiten aristas no dirigidas en este sistema
+      showEdgeValidationError(
+        'NO_UNDIRECTED',
+        'Las aristas deben ser dirigidas',
+        getNodeLabel
+      );
+      // Revertir el select a su valor anterior
+      event.target.value = edge.directed ? 'forward' : 'backward';
+      return;
     } else if (direction === 'forward') {
-      edge.directed = true;
+      newFromId = edge.from;
+      newToId = edge.to;
+      newDirected = true;
     } else if (direction === 'backward') {
-      edge.directed = true;
+      newFromId = edge.to;
+      newToId = edge.from;
+      newDirected = true;
+    }
+
+    // Validar el cambio de dirección
+    const validation = validateDirectionChange(
+      edge,
+      direction,
+      edges.value,
+      getNodeLabel
+    );
+
+    if (!validation.valid) {
+      showEdgeValidationError(validation.error, validation.message, getNodeLabel);
+      // Revertir el select
+      event.target.value = 'forward';
+      return;
+    }
+
+    // Si la validación pasa, aplicar cambios
+    if (direction === 'backward') {
       [edge.from, edge.to] = [edge.to, edge.from];
     }
+    edge.directed = newDirected;
   };
 
   return {

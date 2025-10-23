@@ -330,6 +330,13 @@ const startSort = async () => {
       case 'insertion':
         await insertionSort(arrayCopy, sortDirection.value);
         break;
+      case 'shell':
+        await shellSort(arrayCopy, sortDirection.value);
+        break;
+
+      case 'merge':
+        await mergeSort(arrayCopy, sortDirection.value);
+        break;
     }
     
     // Guardar el resultado ordenado
@@ -508,6 +515,151 @@ const insertionSort = async (arr, ascending) => {
   comparingIndices.value = [];
   swappingIndices.value = [];
 };
+
+
+const shellSort = async (arr, ascending) => {
+  const n = arr.length;
+  let h = 1;
+  
+  while (h < Math.floor(n / 3)) {
+    h = 3 * h + 1; //Tamaño de los saltos
+  }
+  
+  while (h >= 1) {
+    for (let i = h; i < n; i++) {
+      let temp = arr[i]; // Guardamos el valor a insertar
+      let j = i;
+      
+      while (j >= h) {
+        // Pausa si está en pausa
+        while (isPaused.value && isSorting.value) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        if (!isSorting.value) return;
+        
+        currentIndex.value = j;
+        comparingIndices.value = [j, j - h];
+        
+        await new Promise(resolve => setTimeout(resolve, animationSpeed.value));
+        
+        const shouldShift = ascending 
+          ? (j - h >= 0 && arr[j - h] > temp) 
+          : (j - h >= 0 && arr[j - h] < temp);
+        
+        if (!shouldShift) break;
+        
+        swappingIndices.value = [j, j - h];
+        arr[j] = arr[j - h]; // Desplazar elemento
+        j -= h;
+        
+        displayArray.value = [...arr];
+        await new Promise(resolve => setTimeout(resolve, animationSpeed.value / 2));
+        swappingIndices.value = [];
+      }
+      
+      arr[j] = temp; // Colocar el valor en su posición final
+      displayArray.value = [...arr];
+      
+      // Marcar como ordenado el subarray hasta i (aproximadamente)
+      if (h === 1) {
+        sortedIndices.value = Array.from({ length: i + 1 }, (_, idx) => idx);
+      }
+    }
+    
+    h = Math.floor(h / 3); // Reducir el gap
+  }
+  
+  // Marcar todos como ordenados al final
+  sortedIndices.value = Array.from({ length: n }, (_, i) => i);
+  sortedArray.value = arr;
+  currentIndex.value = -1;
+};
+
+//Merge Sort
+const mergeSort = async (arr, ascending) => {
+  const aux = new Array(arr.length);
+  await mergeSortHelper(arr, aux, 0, arr.length - 1, ascending);
+  
+  // Marcar todos como ordenados al final
+  sortedIndices.value = Array.from({ length: arr.length }, (_, i) => i);
+  sortedArray.value = arr;
+  currentIndex.value = -1;
+};
+
+const mergeSortHelper = async (arr, aux, lo, hi, ascending) => {
+  if (lo >= hi) return;
+  
+  const mid = lo + Math.floor((hi - lo) / 2);
+  
+  await mergeSortHelper(arr, aux, lo, mid, ascending);
+  await mergeSortHelper(arr, aux, mid + 1, hi, ascending);
+  await mergeHelper(arr, aux, lo, mid, hi, ascending);
+
+  for (let idx = lo; idx <= hi; idx++) {
+    sortedIndices.value.push(idx);
+  }
+  sortedIndices.value = [...new Set(sortedIndices.value)];
+};
+
+const mergeHelper = async (arr, aux, lo, mid, hi, ascending) => {
+  for (let k = lo; k <= hi; k++) {
+    aux[k] = arr[k];
+  }
+  
+  let i = lo;
+  let j = mid + 1;
+  
+  for (let k = lo; k <= hi; k++) {
+    while (isPaused.value && isSorting.value) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    if (!isSorting.value) return;
+    
+    currentIndex.value = k;
+    
+    if (i <= mid && j <= hi) {
+      comparingIndices.value = [i, j];
+      await new Promise(resolve => setTimeout(resolve, animationSpeed.value));
+    }
+    
+    let fromIndex;
+    if (i > mid) {
+      arr[k] = aux[j];
+      fromIndex = j;
+      j++;
+    } else if (j > hi) {
+      arr[k] = aux[i];
+      fromIndex = i;
+      i++;
+    } else {
+      const shouldTakeJ = ascending 
+        ? aux[j] < aux[i] 
+        : aux[j] > aux[i];
+      
+      if (shouldTakeJ) {
+        arr[k] = aux[j];
+        fromIndex = j;
+        j++;
+      } else {
+        arr[k] = aux[i];
+        fromIndex = i;
+        i++;
+      }
+    }
+    
+    swappingIndices.value = [k, fromIndex];
+    displayArray.value = [...arr];
+    await new Promise(resolve => setTimeout(resolve, animationSpeed.value / 2));
+    
+    swappingIndices.value = [];
+    comparingIndices.value = [];
+  }
+};
+
+
+
 
 // =============================================
 // FUNCIONES DE IMPORT/EXPORT

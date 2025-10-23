@@ -2,32 +2,14 @@
   <header class="toolbar-top">
     <div class="header-content">
       <div class="brand-section">
-        <h1>PIZARRA DE GRAFOS-ALGORITMO DE ASIGNACION</h1>
+        <h1>ALGORITMO NORTHWEST</h1>
       </div>
       
       <nav class="toolbar-nav">
         <div class="nav-group export-group">
           <span class="group-label">Exportar</span>
-          <div class="button-group">
-            <button @click="$emit('export-image')" class="toolbar-btn" title="Exportar como Imagen">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
-                <path d="M21 15L16 10L11 15M11 15L7 11L3 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span>Imagen</span>
-            </button>
-            
-            <button @click="$emit('export-pdf')" class="toolbar-btn" title="Exportar como PDF">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M9 13H15M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>PDF</span>
-            </button>
-            
-            <button @click="$emit('export-json')" class="toolbar-btn" title="Exportar como JSON">
+          <div class="button-group">  
+            <button @click="handleExportJson" class="toolbar-btn" title="Exportar como JSON">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M16 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V8L16 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M16 3V8H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -54,13 +36,13 @@
         <div class="divider-vertical"></div>
 
         <div class="nav-group">
-          <span class="group-label">Asignación</span>
+          <span class="group-label">Resolver NorthWest</span>
           <div class="button-group">
             <button 
-              @click="$emit('set-optimization-mode', 'minimize')"
+              @click="$emit('solve-minimize')"
               :class="{ 'active': currentOptimizationMode === 'minimize' }"
               class="toolbar-btn assignment-btn"
-              title="Minimizar"
+              title="Resolver minimizando costos"
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -75,10 +57,10 @@
             </button>
 
             <button 
-              @click="$emit('set-optimization-mode', 'maximize')"
+              @click="$emit('solve-maximize')"
               :class="{ 'active': currentOptimizationMode === 'maximize' }"
               class="toolbar-btn assignment-btn"
-              title="Maximizar"
+              title="Resolver maximizando beneficios"
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -93,59 +75,109 @@
             </button>
           </div>
         </div>
+      </nav>
+    </div>
 
-        <div class="divider-vertical"></div>
-
-        <div class="nav-group tools-group">
-          <span class="group-label">Herramientas</span>
-          <div class="button-group">
-            <BackgroundSelector
-              :canvas-background-style="canvasBackgroundStyle"
-              :canvas-background-color="canvasBackgroundColor"
-              @set-background="$emit('set-background', $event)"
-              @update-color="$emit('update-background-color', $event)"
-            />
-            
-            <button 
-              @click="$emit('toggle-zoom')" 
-              :class="{ 'active': isZoomEnabled }"
-              class="toolbar-btn zoom-btn"
-              title="Activar/Desactivar Zoom"
-            >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
-                <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M11 8V14M8 11H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>Zoom</span>
-            </button>
+    <!-- Modal para nombre personalizado -->
+    <div v-if="showFilenameModal" class="modal-overlay" @click.self="closeModal">
+      <div class="filename-modal">
+        <div class="modal-header">
+          <h3>Nombre del Archivo</h3>
+          <button @click="closeModal" class="modal-close-btn">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Ingresa un nombre personalizado para el archivo JSON:</p>
+          <input 
+            type="text" 
+            v-model="customFilename" 
+            @keyup.enter="confirmExport"
+            placeholder="Ej: solucion-northwest-enero"
+            class="filename-input"
+            ref="filenameInput"
+          />
+          <div class="filename-preview">
+            <span class="preview-label">Archivo:</span>
+            <span class="preview-filename">{{ customFilename || 'solucion-northwest' }}.json</span>
           </div>
         </div>
-      </nav>
+        <div class="modal-footer">
+          <button @click="closeModal" class="modal-btn cancel-btn">Cancelar</button>
+          <button @click="confirmExport" class="modal-btn confirm-btn" :disabled="!customFilename.trim()">
+            Descargar
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import BackgroundSelector from './BackgroundSelector.vue';
+import { ref, nextTick } from 'vue';
 
-defineProps({
-  canvasBackgroundStyle: String,
-  canvasBackgroundColor: String,
-  isZoomEnabled: Boolean,
+const props = defineProps({
   currentOptimizationMode: String 
 });
 
-defineEmits([
-  'export-image',
-  'export-pdf',
+// Estados para el modal de nombre personalizado
+const showFilenameModal = ref(false);
+const customFilename = ref('');
+const filenameInput = ref(null);
+
+const emit = defineEmits([
   'export-json',
   'import-json',
-  'set-background',
-  'update-background-color',
-  'toggle-zoom',
-  'set-optimization-mode'
+  'solve-minimize',
+  'solve-maximize'
 ]);
+
+/**
+ * Maneja la exportación JSON con nombre personalizado
+ */
+const handleExportJson = () => {
+  // Generar nombre por defecto basado en fecha
+  const date = new Date();
+  const timestamp = date.toISOString().split('T')[0] + '_' + 
+                   date.getHours() + '-' + date.getMinutes();
+  customFilename.value = `solucion-northwest-${timestamp}`;
+  
+  // Mostrar modal
+  showFilenameModal.value = true;
+  
+  // Enfocar el input después de que el modal se renderice
+  nextTick(() => {
+    if (filenameInput.value) {
+      filenameInput.value.focus();
+      filenameInput.value.select();
+    }
+  });
+};
+
+/**
+ * Confirma la exportación con el nombre personalizado
+ */
+const confirmExport = () => {
+  if (!customFilename.value.trim()) {
+    return;
+  }
+  
+  // Emitir evento con el nombre personalizado
+  emit('export-json', customFilename.value.trim() + '.json');
+  
+  // Cerrar modal
+  closeModal();
+};
+
+/**
+ * Cierra el modal y limpia el estado
+ */
+const closeModal = () => {
+  showFilenameModal.value = false;
+  customFilename.value = '';
+};
 </script>
 
 <style scoped>
@@ -159,6 +191,7 @@ defineEmits([
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   backdrop-filter: blur(10px);
   flex-shrink: 0;
+  position: relative;
 }
 
 .header-content {
@@ -174,13 +207,6 @@ defineEmits([
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
 }
 
 .toolbar-top h1 {
@@ -303,6 +329,181 @@ defineEmits([
   background: linear-gradient(180deg, transparent, rgba(224, 201, 182, 0.4), transparent);
 }
 
+/* Modal para nombre personalizado */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.filename-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.modal-close-btn svg {
+  width: 20px;
+  height: 20px;
+  color: #666;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-body p {
+  margin: 0 0 16px 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.filename-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+  margin-bottom: 16px;
+}
+
+.filename-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.filename-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.preview-label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.preview-filename {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #4a90e2;
+  background: rgba(74, 144, 226, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-family: inherit;
+}
+
+.cancel-btn {
+  background: #f8f9fa;
+  color: #666;
+  border: 1px solid #dee2e6;
+}
+
+.cancel-btn:hover {
+  background: #e9ecef;
+}
+
+.confirm-btn {
+  background: #4a90e2;
+  color: white;
+}
+
+.confirm-btn:hover:not(:disabled) {
+  background: #357abd;
+  transform: translateY(-1px);
+}
+
+.confirm-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Dark Theme */
 .dark-theme .toolbar-top {
   background: linear-gradient(180deg, rgba(44, 44, 44, 0.98) 0%, rgba(35, 35, 35, 0.95) 100%);
@@ -346,6 +547,71 @@ defineEmits([
   background: linear-gradient(180deg, transparent, rgba(70, 70, 70, 0.4), transparent);
 }
 
+/* Dark theme para el modal */
+.dark-theme .filename-modal {
+  background: #2d3748;
+  color: #e2e8f0;
+}
+
+.dark-theme .modal-header {
+  border-bottom-color: #4a5568;
+}
+
+.dark-theme .modal-header h3 {
+  color: #e2e8f0;
+}
+
+.dark-theme .modal-close-btn:hover {
+  background-color: #4a5568;
+}
+
+.dark-theme .modal-close-btn svg {
+  color: #cbd5e0;
+}
+
+.dark-theme .modal-body p {
+  color: #cbd5e0;
+}
+
+.dark-theme .filename-input {
+  background: #4a5568;
+  border-color: #718096;
+  color: #e2e8f0;
+}
+
+.dark-theme .filename-input:focus {
+  border-color: #63b3ed;
+  box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.2);
+}
+
+.dark-theme .filename-preview {
+  background: #4a5568;
+  border-color: #718096;
+}
+
+.dark-theme .preview-label {
+  color: #cbd5e0;
+}
+
+.dark-theme .preview-filename {
+  color: #63b3ed;
+  background: rgba(99, 179, 237, 0.2);
+}
+
+.dark-theme .modal-footer {
+  border-top-color: #4a5568;
+}
+
+.dark-theme .cancel-btn {
+  background: #4a5568;
+  color: #cbd5e0;
+  border-color: #718096;
+}
+
+.dark-theme .cancel-btn:hover {
+  background: #718096;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .toolbar-top {
@@ -367,6 +633,11 @@ defineEmits([
   .group-label {
     font-size: 9px;
   }
+
+  .filename-modal {
+    width: 95%;
+    margin: 20px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -385,6 +656,19 @@ defineEmits([
   .brand-icon {
     width: 28px;
     height: 28px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    padding: 16px 20px;
+  }
+
+  .modal-btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
   }
 }
 </style>

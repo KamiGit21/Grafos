@@ -12,11 +12,8 @@
             </svg>
           </div>
           <div class="header-text">
-            <h2>Matriz de Asignación</h2>
-            <span class="node-count" v-if="nodes.length > 0 && destinations.length > 0">
-              {{ optimizationMode === 'minimize' ? 'Minimización' : 'Maximización' }} | 
-              {{ nodes.length }} Orígenes × {{ destinations.length }} Destinos
-            </span>
+            <h2>Matriz de Adyacencia</h2>
+            <span class="node-count" v-if="nodes.length > 0">{{ nodes.length }} × {{ nodes.length }}</span>
           </div>
         </div>
         <button @click="$emit('close')" class="close-button" title="Cerrar">
@@ -27,40 +24,31 @@
       </header>
       
       <main class="matrix-modal-body" :class="currentTheme">
-        <div v-if="nodes.length > 0 && destinations.length > 0 && assignmentMatrix.length > 0" class="table-container">
+        <div v-if="nodes.length > 0" class="table-container">
           <table class="matrix-table">
             <thead>
               <tr>
                 <th class="corner-cell">
-                  <div class="corner-content">
-                    <span class="corner-label">Destino</span>
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span class="corner-label">Origen</span>
-                  </div>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 3L3 9M3 9L9 15M3 9H21M15 9L21 15M21 15L15 21M21 15H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
                 </th>
-                <th v-for="destination in destinations" :key="'h' + destination.id" class="header-cell">
-                  <span class="node-label">{{ destination.label || destination.id }}</span>
+                <th v-for="n in nodes" :key="'h' + n.id" class="header-cell">
+                  <span class="node-label">{{ n.label }}</span>
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(node, rowIndex) in nodes" :key="'r' + node.id">
+              <tr v-for="(row, rowIndex) in adjacencyMatrix" :key="'r' + nodes[rowIndex].id">
                 <th class="row-header">
-                  <span class="node-label">{{ node.label || node.id }}</span>
+                  <span class="node-label">{{ nodes[rowIndex].label }}</span>
                 </th>
                 <td 
-                  v-for="(weight, colIndex) in assignmentMatrix[rowIndex]" 
-                  :key="'c' + destinations[colIndex].id"
-                  :class="['matrix-cell', { 
-                    'has-edge': weight < 999999 && weight > 0, 
-                    'no-connection': weight >= 999999,
-                    'zero-cost': weight === 0 && weight < 999999
-                  }]"
+                  v-for="(weight, colIndex) in row" 
+                  :key="'c' + nodes[colIndex].id"
+                  :class="['matrix-cell', { 'has-edge': weight > 0, 'self-loop': rowIndex === colIndex }]"
                 >
-                  <span class="weight-value">{{ formatValue(weight) }}</span>
-                  <div v-if="weight >= 999999" class="no-connection-indicator">∞</div>
+                  <span class="weight-value">{{ weight }}</span>
                 </td>
               </tr>
             </tbody>
@@ -72,53 +60,8 @@
             <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/>
             <path d="M12 8V12M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          <p>No hay datos para la matriz de asignación</p>
-          <span class="empty-hint">Agrega orígenes y destinos con conexiones al grafo</span>
-        </div>
-
-        <!-- Información adicional -->
-        <div class="matrix-info" v-if="nodes.length > 0 && destinations.length > 0">
-          <div class="info-section">
-            <h4>Información de la Matriz</h4>
-            <div class="info-items">
-              <div class="info-item">
-                <span class="info-label">Modo:</span>
-                <span class="info-value" :class="optimizationMode">{{ 
-                  optimizationMode === 'minimize' ? 'Minimización' : 'Maximización' 
-                }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Orígenes:</span>
-                <span class="info-value">{{ nodes.length }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Destinos:</span>
-                <span class="info-value">{{ destinations.length }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Conexiones válidas:</span>
-                <span class="info-value">{{ countValidConnections }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="legend-section">
-            <div class="legend-title">Leyenda</div>
-            <div class="legend-items">
-              <div class="legend-item">
-                <div class="legend-square has-edge-square"></div>
-                <span>Conexión con costo</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-square zero-cost-square"></div>
-                <span>Costo cero</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-square no-connection-square"></div>
-                <span>Sin conexión (∞)</span>
-              </div>
-            </div>
-          </div>
+          <p>No hay nodos para mostrar en la matriz</p>
+          <span class="empty-hint">Agrega nodos al canvas para ver la matriz de adyacencia</span>
         </div>
       </main>
     </div>
@@ -126,41 +69,13 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-
-const props = defineProps({
+defineProps({
   nodes: Array,
-  destinations: Array,
-  assignmentMatrix: Array,
-  currentTheme: String,
-  optimizationMode: String
+  adjacencyMatrix: Array,
+  currentTheme: String
 });
 
 defineEmits(['close']);
-
-// Contar conexiones válidas
-const countValidConnections = computed(() => {
-  if (!props.assignmentMatrix.length) return 0;
-  let count = 0;
-  for (let i = 0; i < props.assignmentMatrix.length; i++) {
-    for (let j = 0; j < props.assignmentMatrix[i].length; j++) {
-      if (props.assignmentMatrix[i][j] < 999999) {
-        count++;
-      }
-    }
-  }
-  return count;
-});
-
-// Formatear valores
-const formatValue = (value) => {
-  if (value === undefined || value === null) return '-';
-  if (value >= 999999) return '∞';
-  if (typeof value === 'number') {
-    return value % 1 === 0 ? value : value.toFixed(2);
-  }
-  return value;
-};
 </script>
 
 <style scoped>
@@ -300,7 +215,6 @@ const formatValue = (value) => {
   overflow: auto;
   border-radius: 12px;
   border: 1px solid rgba(224, 201, 182, 0.2);
-  margin-bottom: 20px;
 }
 
 .matrix-table {
@@ -326,28 +240,12 @@ const formatValue = (value) => {
   left: 0;
   top: 0;
   z-index: 3;
-  padding: 8px;
 }
 
-.corner-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.corner-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.corner-cell svg {
+  width: 18px;
+  height: 18px;
   color: #a08970;
-}
-
-.corner-content svg {
-  width: 16px;
-  height: 16px;
-  color: #c9a887;
 }
 
 .header-cell {
@@ -396,152 +294,18 @@ const formatValue = (value) => {
   background: linear-gradient(135deg, rgba(139, 195, 74, 0.25), rgba(139, 195, 74, 0.15));
 }
 
-.matrix-cell.zero-cost {
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.15), rgba(33, 150, 243, 0.05));
+.matrix-cell.self-loop {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05));
 }
 
-.matrix-cell.zero-cost:hover {
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.25), rgba(33, 150, 243, 0.15));
-}
-
-.matrix-cell.no-connection {
-  background: linear-gradient(135deg, rgba(158, 158, 158, 0.15), rgba(158, 158, 158, 0.05));
-  color: #999;
-}
-
-.matrix-cell.no-connection:hover {
-  background: linear-gradient(135deg, rgba(158, 158, 158, 0.25), rgba(158, 158, 158, 0.15));
+.matrix-cell.self-loop:hover {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.25), rgba(255, 193, 7, 0.15));
 }
 
 .weight-value {
   font-size: 14px;
   font-weight: 700;
   font-family: 'Courier New', monospace;
-}
-
-.no-connection-indicator {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  background: rgba(158, 158, 158, 0.3);
-  color: #666;
-  border-radius: 4px;
-  padding: 1px 4px;
-  font-size: 10px;
-  font-weight: bold;
-}
-
-/* Información adicional */
-.matrix-info {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.info-section {
-  padding: 16px;
-  background: rgba(224, 201, 182, 0.1);
-  border-radius: 12px;
-  border: 1px solid rgba(224, 201, 182, 0.2);
-}
-
-.info-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #8b7355;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.info-items {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(224, 201, 182, 0.1);
-}
-
-.info-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #8b7355;
-}
-
-.info-value {
-  font-size: 13px;
-  font-weight: 700;
-  font-family: 'Courier New', monospace;
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.info-value.minimize {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
-  color: #4caf50;
-}
-
-.info-value.maximize {
-  background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 152, 0, 0.1));
-  color: #ff9800;
-}
-
-/* Legend */
-.legend-section {
-  padding: 16px;
-  background: rgba(224, 201, 182, 0.1);
-  border-radius: 12px;
-  border: 1px solid rgba(224, 201, 182, 0.2);
-}
-
-.legend-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #8b7355;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
-}
-
-.legend-items {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #6d5940;
-}
-
-.legend-square {
-  width: 16px;
-  height: 16px;
-  border-radius: 3px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.has-edge-square {
-  background: linear-gradient(135deg, rgba(139, 195, 74, 0.3), rgba(139, 195, 74, 0.15));
-}
-
-.zero-cost-square {
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.3), rgba(33, 150, 243, 0.15));
-}
-
-.no-connection-square {
-  background: linear-gradient(135deg, rgba(158, 158, 158, 0.3), rgba(158, 158, 158, 0.15));
 }
 
 .empty-state {
@@ -635,7 +399,7 @@ const formatValue = (value) => {
   background: linear-gradient(135deg, rgba(70, 70, 70, 0.4), rgba(90, 90, 90, 0.3));
 }
 
-.dark-theme .corner-content svg {
+.dark-theme .corner-cell svg {
   color: #a08970;
 }
 
@@ -668,35 +432,12 @@ const formatValue = (value) => {
   background: linear-gradient(135deg, rgba(139, 195, 74, 0.3), rgba(139, 195, 74, 0.2));
 }
 
-.dark-theme .matrix-cell.zero-cost {
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(33, 150, 243, 0.1));
+.dark-theme .matrix-cell.self-loop {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
 }
 
-.dark-theme .matrix-cell.zero-cost:hover {
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.3), rgba(33, 150, 243, 0.2));
-}
-
-.dark-theme .matrix-cell.no-connection {
-  background: linear-gradient(135deg, rgba(158, 158, 158, 0.2), rgba(158, 158, 158, 0.1));
-}
-
-.dark-theme .matrix-cell.no-connection:hover {
-  background: linear-gradient(135deg, rgba(158, 158, 158, 0.3), rgba(158, 158, 158, 0.2));
-}
-
-.dark-theme .no-connection-indicator {
-  background: rgba(90, 90, 90, 0.5);
-  color: #aaa;
-}
-
-.dark-theme .info-section,
-.dark-theme .legend-section {
-  background: rgba(70, 70, 70, 0.3);
-  border-color: rgba(70, 70, 70, 0.4);
-}
-
-.dark-theme .info-value {
-  background: rgba(58, 58, 58, 0.6);
+.dark-theme .matrix-cell.self-loop:hover {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.2));
 }
 
 .dark-theme .empty-state svg {
@@ -785,11 +526,6 @@ const formatValue = (value) => {
   .node-label {
     padding: 3px 6px;
     font-size: 11px;
-  }
-  
-  .matrix-info {
-    grid-template-columns: 1fr;
-    gap: 16px;
   }
 }
 </style>
