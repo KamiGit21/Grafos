@@ -45,7 +45,8 @@ export default {
         { name: 'Johnson', route: '/johnson' },
         { name: 'Asignación', route: '/asignacion' },
         { name: 'Northwest', route: '/northwest' },
-        { name: 'Sorts', route: '/sorts' }
+        { name: 'Sorts', route: '/sorts' },
+        { name: 'Trees', route: '/trees' }
       ],
       activeRoute: this.$route ? this.$route.path : '/',
       currentTheme: 'light-theme',
