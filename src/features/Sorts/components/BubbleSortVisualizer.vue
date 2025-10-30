@@ -59,12 +59,26 @@
         </section>
       </main>
     </div>
+
+    <!-- ✅ BOTÓN DE AYUDA (igual que en Asignacion.vue) -->
+    <button @click="showHelp = true" class="help-button" title="Ayuda">?</button>
+
+    <!-- ✅ MODAL DE AYUDA CON PDF DE SORTS -->
+    <Help
+      v-if="showHelp"
+      pdfEmbedUrl="https://drive.google.com/file/d/1q0D0Lz9KsNj2LsQCJNzI3GSeR8HQjYXQ/preview"
+      pdfViewerUrl="https://drive.google.com/file/d/1q0D0Lz9KsNj2LsQCJNzI3GSeR8HQjYXQ/view?usp=drive_link"
+      :currentTheme="theme"
+      @close="showHelp = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
 import Navbar from '../../../components/Navbar.vue';
+import Help from '../../../components/Help.vue'; // ✅ Importado
+
 import ControlPanel from './ControlPanel.vue';
 import ArrayDisplay from './ArrayDisplay.vue';
 import BubbleAnimation from './BubbleAnimation.vue';
@@ -74,6 +88,9 @@ import BubbleAnimation from './BubbleAnimation.vue';
 // =============================================
 
 const theme = ref(localStorage.getItem('data-theme') || 'light-theme');
+const showHelp = ref(false); // ✅ Control del modal de ayuda
+
+// ... (todo el resto de tu lógica permanece igual)
 
 // Estados principales para los arrays
 const originalArray = ref([]);        // Array original sin ordenar
@@ -333,7 +350,6 @@ const startSort = async () => {
       case 'shell':
         await shellSort(arrayCopy, sortDirection.value);
         break;
-
       case 'merge':
         await mergeSort(arrayCopy, sortDirection.value);
         break;
@@ -516,7 +532,6 @@ const insertionSort = async (arr, ascending) => {
   swappingIndices.value = [];
 };
 
-
 const shellSort = async (arr, ascending) => {
   const n = arr.length;
   let h = 1;
@@ -658,9 +673,6 @@ const mergeHelper = async (arr, aux, lo, mid, hi, ascending) => {
   }
 };
 
-
-
-
 // =============================================
 // FUNCIONES DE IMPORT/EXPORT
 // =============================================
@@ -783,7 +795,36 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Estilos permanecen iguales */
+/* Estilos existentes... */
+
+/* ✅ Estilo del botón de ayuda (igual que en Asignacion.vue) */
+.help-button {
+  position: fixed;
+  right: 25px;
+  bottom: 25px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #c59cf8;
+  color: white;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 999;
+  transition: transform 0.2s ease-in-out, background-color 0.2s;
+}
+
+.help-button:hover {
+  transform: scale(1.1);
+  background-color: #0056b3;
+}
+
+/* Resto de tus estilos... */
 .sorts-container {
   min-height: 100vh;
   font-family: 'Oswald', sans-serif;

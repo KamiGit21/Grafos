@@ -44,7 +44,13 @@
       ?
     </button>
     
-    <Help v-if="showHelp" :theme="currentTheme" @close="showHelp = false" />
+    <Help
+      v-if="showHelp"
+      pdfEmbedUrl="https://drive.google.com/file/d/1rfQpGZ5p-7eyHTNMlDzyMlkR64GFPcrN/preview"
+      pdfViewerUrl="https://drive.google.com/file/d/1rfQpGZ5p-7eyHTNMlDzyMlkR64GFPcrN/view?usp=drive_link"
+      :currentTheme="currentTheme"
+      @close="showHelp = false"
+    />
     
     <input 
       type="file" 
