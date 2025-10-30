@@ -5,6 +5,10 @@ import AsignacionRoutes from '../features/Asignacion/routes/routes.js';
 import SortsRoutes from '../features/Sorts/routes/routes.js';
 import NorthWestRoutes from '../features/NorthWest/routes/routes.js';
 import TreesRoutes from '../features/Trees/routes/routes.js'; // ← Agregar esta línea
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/Santi_branch_2.0
 
 const routes = [
   ...homeRoutes,
@@ -12,7 +16,11 @@ const routes = [
   ...AsignacionRoutes,
   ...SortsRoutes,
   ...NorthWestRoutes,
+<<<<<<< HEAD
   ...TreesRoutes, // ← Agregar esta línea
+=======
+  ...TreesRoutes,
+>>>>>>> origin/Santi_branch_2.0
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

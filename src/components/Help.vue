@@ -1,11 +1,11 @@
 <template>
   <div class="help-modal-overlay" @click.self="closeModal" :class="currentTheme">
-    <div class="help-modal-content" >
+    <div class="help-modal-content">
       <header class="help-modal-header">
         <h2>Manual de Usuario</h2>
         <button class="close-button" @click="closeModal" title="Cerrar">×</button>
       </header>
-      
+
       <main class="help-modal-body">
         <iframe :src="pdfEmbedUrl" frameborder="0"></iframe>
       </main>
@@ -20,27 +20,26 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { defineProps, defineEmits } from 'vue';
 
-// Se definen los 'emits' para comunicar al componente padre que se debe cerrar
+
 const emit = defineEmits(['close']);
 
-// Se definen las props que el componente puede recibir, en este caso el tema
 const props = defineProps({
   pdfEmbedUrl: {
     type: String,
-    default: 'https://drive.google.com/file/d/1-joPgGxcUroXIreuMnEx8sXp6hshqBw4/preview'
+    required: true
   },
   pdfViewerUrl: {
     type: String,
-    default: 'https://drive.google.com/file/d/1-joPgGxcUroXIreuMnEx8sXp6hshqBw4/view?usp=sharing'
+    required: true
   },
+  currentTheme: {
+    type: String,
+    default: 'light-theme'
+  }
 });
 
-const pdfEmbedUrl = ref(props.pdfEmbedUrl);
-const pdfViewerUrl = ref(props.pdfViewerUrl);
-
-// Función que emite el evento 'close' para que el padre cierre el modal
 const closeModal = () => {
   emit('close');
 };
@@ -57,7 +56,7 @@ const closeModal = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* Asegura que esté por encima de todo */
+  z-index: 1000;
 }
 
 .help-modal-content {
@@ -137,7 +136,6 @@ const closeModal = () => {
 .light-theme .help-modal-content{
   background-color: #e0e0e0;
 }
-
 
 .dark-theme {
   background-color: #3a3a3a;
