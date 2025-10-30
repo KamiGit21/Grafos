@@ -15,85 +15,111 @@ export class BinarySearchTree {
     this.nodeCount = 0;
     this.treeHeight = -1;
     this.insertionOrder = [];
+    this.valuesSet = new Set();
   }
 
   insert(value) {
+    if (this.valuesSet.has(value)) {
+      throw new Error(`El valor ${value} ya existe en el árbol. No se permiten valores duplicados.`);
+    }
+    
     const newNode = new TreeNode(value);
     
     if (this.root === null) {
       this.root = newNode;
     } else {
-      this.insertNode(this.root, newNode);
+      this.insertLevelOrder(newNode);
     }
     
     this.nodeCount++;
     this.insertionOrder.push(newNode.id);
+    this.valuesSet.add(value);
     this.updateHeight();
     return newNode;
   }
 
-  insertNode(node, newNode) {
-    if (newNode.value < node.value) {
-      if (node.left === null) {
-        node.left = newNode;
+  insertLevelOrder(newNode) {
+    const queue = [this.root];
+    
+    while (queue.length > 0) {
+      const current = queue.shift();
+      
+      // Si no tiene hijo izquierdo, insertar aquí
+      if (current.left === null) {
+        current.left = newNode;
+        return;
       } else {
-        this.insertNode(node.left, newNode);
+        queue.push(current.left);
       }
-    } else {
-      if (node.right === null) {
-        node.right = newNode;
+      
+      // Si no tiene hijo derecho, insertar aquí
+      if (current.right === null) {
+        current.right = newNode;
+        return;
       } else {
-        this.insertNode(node.right, newNode);
+        queue.push(current.right);
       }
     }
+  }
+
+  // Método auxiliar para encontrar la posición del siguiente nodo a insertar
+  findNextInsertPosition() {
+    if (!this.root) return null;
+    
+    const queue = [this.root];
+    while (queue.length > 0) {
+      const current = queue.shift();
+      
+      if (current.left === null || current.right === null) {
+        return current;
+      }
+      
+      if (current.left) queue.push(current.left);
+      if (current.right) queue.push(current.right);
+    }
+    return null;
   }
 
   removeLast() {
     if (this.root === null || this.insertionOrder.length === 0) return null;
     
     const lastNodeId = this.insertionOrder.pop();
-    const nodeToRemove = this.findNodeById(this.root, lastNodeId);
+    let removedValue = null;
     
-    if (!nodeToRemove) return null;
-    
-    this.removeNode(nodeToRemove);
-    this.nodeCount--;
-    this.updateHeight();
-    return nodeToRemove;
-  }
-
-  findNodeById(node, id) {
-    if (!node) return null;
-    if (node.id === id) return node;
-    
-    const leftResult = this.findNodeById(node.left, id);
-    if (leftResult) return leftResult;
-    
-    return this.findNodeById(node.right, id);
-  }
-
-  removeNode(node) {
-    if (!node) return;
-    
-    const findParent = (current, target) => {
-      if (!current) return null;
-      if (current.left === target || current.right === target) return current;
-      
-      const leftParent = findParent(current.left, target);
-      if (leftParent) return leftParent;
-      
-      return findParent(current.right, target);
-    };
-    
-    const parent = findParent(this.root, node);
-    
-    if (!parent) {
+    if (lastNodeId === this.root.id) {
+      removedValue = this.root.value;
       this.root = null;
-    } else if (parent.left === node) {
-      parent.left = null;
     } else {
-      parent.right = null;
+      removedValue = this.removeLastNode(this.root, lastNodeId);
     }
+    
+    if (removedValue !== null) {
+      this.nodeCount--;
+      this.valuesSet.delete(removedValue);
+    }
+    
+    this.updateHeight();
+    return lastNodeId;
+  }
+
+  removeLastNode(node, targetId) {
+    if (!node) return null;
+    
+    if (node.left && node.left.id === targetId) {
+      const value = node.left.value;
+      node.left = null;
+      return value;
+    }
+    if (node.right && node.right.id === targetId) {
+      const value = node.right.value;
+      node.right = null;
+      return value;
+    }
+    
+    const leftResult = this.removeLastNode(node.left, targetId);
+    if (leftResult !== null) return leftResult;
+    
+    return this.removeLastNode(node.right, targetId);
   }
 
   updateHeight() {
@@ -107,6 +133,28 @@ export class BinarySearchTree {
     return Math.max(leftHeight, rightHeight) + 1;
   }
 
+  isComplete() {
+    if (!this.root) return true;
+    
+    const queue = [this.root];
+    let foundNull = false;
+    
+    while (queue.length > 0) {
+      const current = queue.shift();
+      
+      if (current === null) {
+        foundNull = true;
+      } else {
+        if (foundNull) return false;
+        queue.push(current.left);
+        queue.push(current.right);
+      }
+    }
+    
+    return true;
+  }
+
+  // Recorridos
   inOrder(node = this.root, result = []) {
     if (node !== null) {
       this.inOrder(node.left, result);
@@ -134,18 +182,28 @@ export class BinarySearchTree {
     return result;
   }
 
+  levelOrder() {
+    const result = [];
+    if (!this.root) return result;
+    
+    const queue = [this.root];
+    while (queue.length > 0) {
+      const current = queue.shift();
+      result.push(current.value);
+      
+      if (current.left) queue.push(current.left);
+      if (current.right) queue.push(current.right);
+    }
+    return result;
+  }
+
   buildTreeFromInPre(inOrder, preOrder) {
-    if (inOrder.length === 0 || preOrder.length === 0) return null;
+    if (inOrder.length === 0) return null;
     
     const rootValue = preOrder[0];
     const root = new TreeNode(rootValue);
     
     const rootIndex = inOrder.indexOf(rootValue);
-    
-    if (rootIndex === -1) {
-      throw new Error('Los recorridos In-Orden y Pre-Orden no son compatibles');
-    }
-    
     const leftInOrder = inOrder.slice(0, rootIndex);
     const rightInOrder = inOrder.slice(rootIndex + 1);
     const leftPreOrder = preOrder.slice(1, 1 + leftInOrder.length);
@@ -158,21 +216,16 @@ export class BinarySearchTree {
   }
 
   buildTreeFromInPost(inOrder, postOrder) {
-    if (inOrder.length === 0 || postOrder.length === 0) return null;
+    if (inOrder.length === 0) return null;
     
     const rootValue = postOrder[postOrder.length - 1];
     const root = new TreeNode(rootValue);
     
     const rootIndex = inOrder.indexOf(rootValue);
-    
-    if (rootIndex === -1) {
-      throw new Error('Los recorridos In-Orden y Post-Orden no son compatibles');
-    }
-    
     const leftInOrder = inOrder.slice(0, rootIndex);
     const rightInOrder = inOrder.slice(rootIndex + 1);
     const leftPostOrder = postOrder.slice(0, leftInOrder.length);
-    const rightPostOrder = postOrder.slice(leftInOrder.length, postOrder.length - 1);
+    const rightPostOrder = postOrder.slice(leftInOrder.length, -1);
     
     root.left = this.buildTreeFromInPost(leftInOrder, leftPostOrder);
     root.right = this.buildTreeFromInPost(rightInOrder, rightPostOrder);
@@ -185,19 +238,20 @@ export class BinarySearchTree {
     this.nodeCount = 0;
     this.treeHeight = -1;
     this.insertionOrder = [];
+    this.valuesSet.clear();
   }
 
   calculatePositions(node = this.root, x = 0, y = 0, level = 0, positions = {}) {
     if (node !== null) {
-      const horizontalSpacing = Math.max(50, 300 / (level + 1));
+      const horizontalSpacing = 100 / (level + 1);
       
-      this.calculatePositions(node.left, x - horizontalSpacing, y + 100, level + 1, positions);
+      this.calculatePositions(node.left, x - horizontalSpacing, y + 80, level + 1, positions);
       
       node.x = x;
       node.y = y;
       positions[node.id] = { x, y, value: node.value, id: node.id };
       
-      this.calculatePositions(node.right, x + horizontalSpacing, y + 100, level + 1, positions);
+      this.calculatePositions(node.right, x + horizontalSpacing, y + 80, level + 1, positions);
     }
     return positions;
   }
@@ -230,6 +284,9 @@ export class BinarySearchTree {
       node.id = nodeData.id || Date.now() + Math.random();
       node.left = deserializeNode(nodeData.left);
       node.right = deserializeNode(nodeData.right);
+      
+      this.valuesSet.add(nodeData.value);
+      
       return node;
     };
     
@@ -237,5 +294,6 @@ export class BinarySearchTree {
     this.nodeCount = data.nodeCount || 0;
     this.treeHeight = data.treeHeight || -1;
     this.insertionOrder = data.insertionOrder || [];
+    this.updateHeight();
   }
 }

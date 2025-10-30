@@ -14,7 +14,7 @@
     <div class="control-buttons">
       <button 
         @click="startAnimation" 
-        :disabled="!hasNodes || isAnimating" 
+        :disabled="!hasNodes || !isComplete || isAnimating" 
         class="action-btn start-btn"
       >
         <span class="btn-icon">▶</span>
@@ -28,6 +28,10 @@
         <span class="btn-icon">⏹</span>
         Detener
       </button>
+    </div>
+    
+    <div v-if="!isComplete && hasNodes" class="warning-message">
+      ⚠️ El árbol no está completo. Complete todos los niveles para iniciar recorridos.
     </div>
     
     <div class="speed-control" v-if="isAnimating">
@@ -65,6 +69,7 @@ export default {
   name: 'TreeAnimationControls',
   props: {
     hasNodes: Boolean,
+    isComplete: Boolean, // Nueva prop para verificar si el árbol es completo
     isAnimating: Boolean,
     traversalResult: String,
     currentStep: Number
@@ -112,6 +117,18 @@ export default {
 </script>
 
 <style scoped>
+.warning-message {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+/* El resto del CSS permanece igual */
 .animation-controls {
   background: rgba(255, 255, 255, 0.85);
   border-radius: 16px;
@@ -393,6 +410,12 @@ label {
   .result-item.current {
     background: linear-gradient(135deg, #ed8936, #dd6b20);
     color: white;
+  }
+  
+  .warning-message {
+    background: #332701;
+    border-color: #665c34;
+    color: #e2c08d;
   }
 }
 </style>

@@ -39,14 +39,14 @@
             :class="{ 'highlighted': highlightedNodes.includes(node.id) }"
           >
             <circle 
-              r="18" 
+              r="18"
               fill="#4FD1C5" 
               stroke="#2D3748" 
               stroke-width="2"
             />
             <text 
               text-anchor="middle" 
-              dy="5" 
+              dy="5"
               fill="white" 
               font-weight="bold"
               font-size="12"
@@ -82,8 +82,8 @@ export default {
   },
   data() {
     return {
-      width: 600,  // Reducido de 800
-      height: 400, // Reducido de 600
+      width: 500,  // Aumentado ligeramente
+      height: 400, // Aumentado ligeramente
       scale: 1,
       translateX: 0,
       translateY: 0,
@@ -135,7 +135,6 @@ export default {
       event.preventDefault();
       const delta = event.deltaY > 0 ? 0.9 : 1.1;
       this.scale *= delta;
-      // Limitar zoom
       this.scale = Math.max(0.3, Math.min(3, this.scale));
     },
     startDrag(event) {
