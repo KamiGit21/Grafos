@@ -15,9 +15,12 @@
               class="number-input"
               @keyup.enter="insertNode"
             >
-            <button @click="insertNode" class="action-btn insert-btn" :disabled="!isValidInput">
+            <button @click="insertNode" class="action-btn insert-btn" :disabled="!canInsert">
               Insertar
             </button>
+          </div>
+          <div v-if="isDuplicate" class="duplicate-warning">
+            ⚠️ El valor ya existe en el árbol
           </div>
         </div>
       </div>
@@ -75,7 +78,11 @@ export default {
   name: 'TreeControlPanel',
   props: {
     nodeCount: Number,
-    treeHeight: Number
+    treeHeight: Number,
+    existingValues: {
+      type: Array,
+      default: () => []
+    }
   },
   data() {
     return {
@@ -86,13 +93,19 @@ export default {
     isValidInput() {
       return this.nodeValue !== null && this.nodeValue !== '';
     },
+    isDuplicate() {
+      return this.isValidInput && this.existingValues.includes(this.nodeValue);
+    },
+    canInsert() {
+      return this.isValidInput && !this.isDuplicate;
+    },
     hasNodes() {
       return this.nodeCount > 0;
     }
   },
   methods: {
     insertNode() {
-      if (this.isValidInput) {
+      if (this.canInsert) {
         this.$emit('insert-node', this.nodeValue);
         this.nodeValue = null;
       }
@@ -367,6 +380,18 @@ export default {
   width: 100%;
 }
 
+.duplicate-warning {
+  color: #e53e3e;
+  font-size: 0.85rem;
+  margin-top: 6px;
+  font-weight: 500;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
 /* Efectos de hover específicos */
 .insert-btn:hover:not(:disabled) {
   box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
@@ -493,6 +518,10 @@ export default {
   .section-divider::before,
   .section-divider::after {
     background: linear-gradient(90deg, transparent, #4a5568, transparent);
+  }
+
+  .duplicate-warning {
+    color: #feb2b2;
   }
 }
 </style>

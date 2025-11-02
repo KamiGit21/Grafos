@@ -5,6 +5,7 @@
         <TreeControlPanel
           :node-count="tree.nodeCount"
           :tree-height="tree.treeHeight"
+          :existing-values="existingValues"
           @insert-node="handleInsertNode"
           @remove-last-node="handleRemoveLastNode"
           @reset-tree="handleResetTree"
@@ -65,6 +66,20 @@ export default {
       currentAnimationStep: -1,
       animationSpeed: 800
     };
+  },
+  computed: {
+    existingValues() {
+      if (!this.tree.root) return [];
+      const values = [];
+      const traverse = (node) => {
+        if (!node) return;
+        traverse(node.left);
+        values.push(node.value);
+        traverse(node.right);
+      };
+      traverse(this.tree.root);
+      return values;
+    }
   },
   methods: {
     handleInsertNode(value) {

@@ -1,3 +1,5 @@
+let globalNodeId = 1;
+
 export class TreeNode {
   constructor(value) {
     this.value = value;
@@ -5,7 +7,7 @@ export class TreeNode {
     this.right = null;
     this.x = 0;
     this.y = 0;
-    this.id = Date.now() + Math.random();
+    this.id = `node_${globalNodeId++}`;
   }
 }
 
@@ -35,7 +37,6 @@ export class BinarySearchTree {
     this.nodeCount++;
     this.insertionOrder.push(newNode.id);
     this.updateHeight();
-    this.calculatePositions(); // RECALCULA
     return newNode;
   }
 
@@ -64,7 +65,6 @@ export class BinarySearchTree {
     this.removeNode(nodeToRemove);
     this.nodeCount--;
     this.updateHeight();
-    this.calculatePositions();
     return nodeToRemove;
   }
 
@@ -96,38 +96,60 @@ export class BinarySearchTree {
     return Math.max(this.calculateHeight(node.left), this.calculateHeight(node.right)) + 1;
   }
 
-  // POSICIONES: RAÍZ EN Y=60
+  // ✅ NUEVO: POSICIONAMIENTO SIN SUPERPOSICIÓN
   calculatePositions() {
-    const positions = {};
-    if (!this.root) return { positions, bounds: { minX: 0, maxX: 0, minY: 0, maxY: 0 } };
+    if (!this.root) {
+      return { positions: {}, bounds: { minX: 0, maxX: 0, minY: 0, maxY: 0 } };
+    }
 
-    let minX = Infinity, maxX = -Infinity, minY = 60, maxY = 60;
-
-    const traverse = (node, x, y, level) => {
+    // Paso 1: Obtener nodos en in-order (ordenado por valor)
+    const inOrderNodes = [];
+    const collectInOrder = (node) => {
       if (!node) return;
-
-      if (node.left) traverse(node.left, x - 100, y + 100, level + 1);
-      if (node.right) traverse(node.right, x + 100, y + 100, level + 1);
-
-      node.x = x;
-      node.y = y;
-      positions[node.id] = { id: node.id, value: node.value, x, y };
-
-      minX = Math.min(minX, x);
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
+      collectInOrder(node.left);
+      inOrderNodes.push(node);
+      collectInOrder(node.right);
     };
+    collectInOrder(this.root);
 
-    traverse(this.root, 0, 60, 0);
+    // Paso 2: Asignar X basado en in-order (evita superposición horizontal)
+    const horizontalSpacing = 100;
+    inOrderNodes.forEach((node, index) => {
+      node.x = index * horizontalSpacing;
+    });
 
-    const padding = 120;
+    // Paso 3: Asignar Y por profundidad
+    const verticalSpacing = 100;
+    const assignY = (node, depth = 0) => {
+      if (!node) return;
+      node.y = 60 + depth * verticalSpacing; // Raíz en Y=60
+      assignY(node.left, depth + 1);
+      assignY(node.right, depth + 1);
+    };
+    assignY(this.root);
+
+    // Paso 4: Construir mapa de posiciones
+    const positions = {};
+    const traverse = (node) => {
+      if (!node) return;
+      positions[node.id] = { id: node.id, value: node.value, x: node.x, y: node.y };
+      traverse(node.left);
+      traverse(node.right);
+    };
+    traverse(this.root);
+
+    // Paso 5: Calcular límites
+    const xs = inOrderNodes.map(n => n.x);
+    const ys = inOrderNodes.map(n => n.y);
+    const padding = 100;
+
     return {
       positions,
       bounds: {
-        minX: minX - padding,
-        maxX: maxX + padding,
-        minY: 30, // FIJO ARRIBA
-        maxY: maxY + padding
+        minX: Math.min(...xs) - padding,
+        maxX: Math.max(...xs) + padding,
+        minY: 30,
+        maxY: Math.max(...ys) + padding
       }
     };
   }
@@ -137,5 +159,6 @@ export class BinarySearchTree {
     this.nodeCount = 0;
     this.treeHeight = -1;
     this.insertionOrder = [];
+    globalNodeId = 1; // Reiniciar IDs
   }
 }
