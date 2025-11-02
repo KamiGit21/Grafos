@@ -17,83 +17,74 @@ export class BinarySearchTree {
     this.insertionOrder = [];
   }
 
+  // INSERT CON MENSAJE DE DUPLICADO
   insert(value) {
     const newNode = new TreeNode(value);
     
-    if (this.root === null) {
+    if (!this.root) {
       this.root = newNode;
     } else {
-      this.insertNode(this.root, newNode);
+      const inserted = this._insert(this.root, newNode);
+      if (!inserted) {
+        console.warn(`Duplicado: el valor ${value} ya existe en el árbol.`);
+        alert(`Error: El valor ${value} ya está en el árbol. No se permiten duplicados.`);
+        return null;
+      }
     }
     
     this.nodeCount++;
     this.insertionOrder.push(newNode.id);
     this.updateHeight();
+    this.calculatePositions(); // RECALCULA
     return newNode;
   }
 
-  insertNode(node, newNode) {
+  _insert(node, newNode) {
     if (newNode.value < node.value) {
-      if (node.left === null) {
+      if (!node.left) {
         node.left = newNode;
-      } else {
-        this.insertNode(node.left, newNode);
+        return true;
       }
-    } else {
-      if (node.right === null) {
+      return this._insert(node.left, newNode);
+    } else if (newNode.value > node.value) {
+      if (!node.right) {
         node.right = newNode;
-      } else {
-        this.insertNode(node.right, newNode);
+        return true;
       }
+      return this._insert(node.right, newNode);
     }
+    return false; // DUPLICADO
   }
 
   removeLast() {
-    if (this.root === null || this.insertionOrder.length === 0) return null;
-    
+    if (!this.root || this.insertionOrder.length === 0) return null;
     const lastNodeId = this.insertionOrder.pop();
     const nodeToRemove = this.findNodeById(this.root, lastNodeId);
-    
     if (!nodeToRemove) return null;
-    
     this.removeNode(nodeToRemove);
     this.nodeCount--;
     this.updateHeight();
+    this.calculatePositions();
     return nodeToRemove;
   }
 
   findNodeById(node, id) {
     if (!node) return null;
     if (node.id === id) return node;
-    
-    const leftResult = this.findNodeById(node.left, id);
-    if (leftResult) return leftResult;
-    
-    return this.findNodeById(node.right, id);
+    return this.findNodeById(node.left, id) || this.findNodeById(node.right, id);
   }
 
   removeNode(node) {
-    if (!node) return;
-    
-    const findParent = (current, target) => {
-      if (!current) return null;
-      if (current.left === target || current.right === target) return current;
-      
-      const leftParent = findParent(current.left, target);
-      if (leftParent) return leftParent;
-      
-      return findParent(current.right, target);
-    };
-    
-    const parent = findParent(this.root, node);
-    
-    if (!parent) {
-      this.root = null;
-    } else if (parent.left === node) {
-      parent.left = null;
-    } else {
-      parent.right = null;
-    }
+    const parent = this._findParent(this.root, node);
+    if (!parent) this.root = null;
+    else if (parent.left === node) parent.left = null;
+    else parent.right = null;
+  }
+
+  _findParent(current, target) {
+    if (!current || current === target) return null;
+    if (current.left === target || current.right === target) return current;
+    return this._findParent(current.left, target) || this._findParent(current.right, target);
   }
 
   updateHeight() {
@@ -101,83 +92,44 @@ export class BinarySearchTree {
   }
 
   calculateHeight(node) {
-    if (node === null) return -1;
-    const leftHeight = this.calculateHeight(node.left);
-    const rightHeight = this.calculateHeight(node.right);
-    return Math.max(leftHeight, rightHeight) + 1;
+    if (!node) return -1;
+    return Math.max(this.calculateHeight(node.left), this.calculateHeight(node.right)) + 1;
   }
 
-  inOrder(node = this.root, result = []) {
-    if (node !== null) {
-      this.inOrder(node.left, result);
-      result.push(node.value);
-      this.inOrder(node.right, result);
-    }
-    return result;
-  }
+  // POSICIONES: RAÍZ EN Y=60
+  calculatePositions() {
+    const positions = {};
+    if (!this.root) return { positions, bounds: { minX: 0, maxX: 0, minY: 0, maxY: 0 } };
 
-  preOrder(node = this.root, result = []) {
-    if (node !== null) {
-      result.push(node.value);
-      this.preOrder(node.left, result);
-      this.preOrder(node.right, result);
-    }
-    return result;
-  }
+    let minX = Infinity, maxX = -Infinity, minY = 60, maxY = 60;
 
-  postOrder(node = this.root, result = []) {
-    if (node !== null) {
-      this.postOrder(node.left, result);
-      this.postOrder(node.right, result);
-      result.push(node.value);
-    }
-    return result;
-  }
+    const traverse = (node, x, y, level) => {
+      if (!node) return;
 
-  buildTreeFromInPre(inOrder, preOrder) {
-    if (inOrder.length === 0 || preOrder.length === 0) return null;
-    
-    const rootValue = preOrder[0];
-    const root = new TreeNode(rootValue);
-    
-    const rootIndex = inOrder.indexOf(rootValue);
-    
-    if (rootIndex === -1) {
-      throw new Error('Los recorridos In-Orden y Pre-Orden no son compatibles');
-    }
-    
-    const leftInOrder = inOrder.slice(0, rootIndex);
-    const rightInOrder = inOrder.slice(rootIndex + 1);
-    const leftPreOrder = preOrder.slice(1, 1 + leftInOrder.length);
-    const rightPreOrder = preOrder.slice(1 + leftInOrder.length);
-    
-    root.left = this.buildTreeFromInPre(leftInOrder, leftPreOrder);
-    root.right = this.buildTreeFromInPre(rightInOrder, rightPreOrder);
-    
-    return root;
-  }
+      if (node.left) traverse(node.left, x - 100, y + 100, level + 1);
+      if (node.right) traverse(node.right, x + 100, y + 100, level + 1);
 
-  buildTreeFromInPost(inOrder, postOrder) {
-    if (inOrder.length === 0 || postOrder.length === 0) return null;
-    
-    const rootValue = postOrder[postOrder.length - 1];
-    const root = new TreeNode(rootValue);
-    
-    const rootIndex = inOrder.indexOf(rootValue);
-    
-    if (rootIndex === -1) {
-      throw new Error('Los recorridos In-Orden y Post-Orden no son compatibles');
-    }
-    
-    const leftInOrder = inOrder.slice(0, rootIndex);
-    const rightInOrder = inOrder.slice(rootIndex + 1);
-    const leftPostOrder = postOrder.slice(0, leftInOrder.length);
-    const rightPostOrder = postOrder.slice(leftInOrder.length, postOrder.length - 1);
-    
-    root.left = this.buildTreeFromInPost(leftInOrder, leftPostOrder);
-    root.right = this.buildTreeFromInPost(rightInOrder, rightPostOrder);
-    
-    return root;
+      node.x = x;
+      node.y = y;
+      positions[node.id] = { id: node.id, value: node.value, x, y };
+
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    };
+
+    traverse(this.root, 0, 60, 0);
+
+    const padding = 120;
+    return {
+      positions,
+      bounds: {
+        minX: minX - padding,
+        maxX: maxX + padding,
+        minY: 30, // FIJO ARRIBA
+        maxY: maxY + padding
+      }
+    };
   }
 
   clear() {
@@ -185,57 +137,5 @@ export class BinarySearchTree {
     this.nodeCount = 0;
     this.treeHeight = -1;
     this.insertionOrder = [];
-  }
-
-  calculatePositions(node = this.root, x = 0, y = 0, level = 0, positions = {}) {
-    if (node !== null) {
-      const horizontalSpacing = Math.max(50, 300 / (level + 1));
-      
-      this.calculatePositions(node.left, x - horizontalSpacing, y + 100, level + 1, positions);
-      
-      node.x = x;
-      node.y = y;
-      positions[node.id] = { x, y, value: node.value, id: node.id };
-      
-      this.calculatePositions(node.right, x + horizontalSpacing, y + 100, level + 1, positions);
-    }
-    return positions;
-  }
-
-  toJSON() {
-    const serializeNode = (node) => {
-      if (!node) return null;
-      return {
-        value: node.value,
-        left: serializeNode(node.left),
-        right: serializeNode(node.right),
-        id: node.id
-      };
-    };
-    
-    return {
-      root: serializeNode(this.root),
-      nodeCount: this.nodeCount,
-      treeHeight: this.treeHeight,
-      insertionOrder: this.insertionOrder
-    };
-  }
-
-  fromJSON(data) {
-    this.clear();
-    
-    const deserializeNode = (nodeData) => {
-      if (!nodeData) return null;
-      const node = new TreeNode(nodeData.value);
-      node.id = nodeData.id || Date.now() + Math.random();
-      node.left = deserializeNode(nodeData.left);
-      node.right = deserializeNode(nodeData.right);
-      return node;
-    };
-    
-    this.root = deserializeNode(data.root);
-    this.nodeCount = data.nodeCount || 0;
-    this.treeHeight = data.treeHeight || -1;
-    this.insertionOrder = data.insertionOrder || [];
   }
 }
