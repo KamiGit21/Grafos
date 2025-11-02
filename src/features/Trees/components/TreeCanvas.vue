@@ -5,8 +5,6 @@
       class="tree-canvas"
       @wheel="handleZoom"
       @mousedown="startDrag"
-      @mousemove="handleDrag"
-      @mouseup="endDrag"
       @mouseleave="endDrag"
     >
       <svg 
@@ -39,14 +37,14 @@
             :class="{ 'highlighted': highlightedNodes.includes(node.id) }"
           >
             <circle 
-              r="18" 
+              r="18"
               fill="#4FD1C5" 
               stroke="#2D3748" 
               stroke-width="2"
             />
             <text 
               text-anchor="middle" 
-              dy="5" 
+              dy="5"
               fill="white" 
               font-weight="bold"
               font-size="12"
@@ -57,11 +55,11 @@
         </g>
       </svg>
       
-      <!-- Controles de zoom y reset -->
+      <!-- Controles -->
       <div class="canvas-controls">
-        <button @click="resetView" class="control-btn" title="Resetear vista">
-          ↺
-        </button>
+        <button @click="zoomIn" class="control-btn" title="Acercar">+</button>
+        <button @click="zoomOut" class="control-btn" title="Alejar">−</button>
+        <button @click="resetView" class="control-btn" title="Resetear vista">↺</button>
         <div class="zoom-info">
           {{ Math.round(scale * 100) }}%
         </div>
@@ -82,19 +80,26 @@ export default {
   },
   data() {
     return {
-      width: 600,  // Reducido de 800
-      height: 400, // Reducido de 600
+      width: 500,
+      height: 400,
       scale: 1,
       translateX: 0,
       translateY: 0,
       isDragging: false,
       lastMouseX: 0,
-      lastMouseY: 0
+      lastMouseY: 0,
+      // Referencias para removeEventListener
+      handleDragBound: null,
+      endDragBound: null
     };
   },
   computed: {
     viewBox() {
-      return `${-this.width / 2 + this.translateX} ${-this.height / 2 + this.translateY} ${this.width / this.scale} ${this.height / this.scale}`;
+      const w = this.width / this.scale;
+      const h = this.height / this.scale;
+      const x = -w / 2 + this.translateX;
+      const y = -h / 2 + this.translateY;
+      return `${x} ${y} ${w} ${h}`;
     },
     nodes() {
       if (!this.tree || !this.tree.root) return [];
@@ -103,66 +108,133 @@ export default {
     },
     lines() {
       if (!this.tree || !this.tree.root) return [];
-      
       const lines = [];
       const traverse = (node) => {
         if (node.left) {
           lines.push({
-            x1: node.x,
-            y1: node.y,
-            x2: node.left.x,
-            y2: node.left.y
+            x1: node.x, y1: node.y,
+            x2: node.left.x, y2: node.left.y
           });
           traverse(node.left);
         }
         if (node.right) {
           lines.push({
-            x1: node.x,
-            y1: node.y,
-            x2: node.right.x,
-            y2: node.right.y
+            x1: node.x, y1: node.y,
+            x2: node.right.x, y2: node.right.y
           });
           traverse(node.right);
         }
       };
-      
       traverse(this.tree.root);
       return lines;
     }
   },
   methods: {
+    // ZOOM CENTRADO EN EL CURSOR
     handleZoom(event) {
       event.preventDefault();
-      const delta = event.deltaY > 0 ? 0.9 : 1.1;
-      this.scale *= delta;
-      // Limitar zoom
-      this.scale = Math.max(0.3, Math.min(3, this.scale));
+
+      const rect = this.$refs.canvasContainer.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      const mousePercentX = mouseX / rect.width;
+      const mousePercentY = mouseY / rect.height;
+
+      const zoomFactor = 0.0018; // Ajusta sensibilidad
+      const delta = -event.deltaY * zoomFactor;
+      const newScale = this.scale * Math.exp(delta);
+      const clampedScale = Math.max(0.3, Math.min(3, newScale));
+
+      if (clampedScale === this.scale) return;
+
+      // Punto en coordenadas del mundo antes del zoom
+      const worldX = -this.translateX + (mousePercentX * this.width / this.scale);
+      const worldY = -this.translateY + (mousePercentY * this.height / this.scale);
+
+      // Ajustar translate para mantener el punto bajo el cursor
+      this.translateX = -worldX + (mousePercentX * this.width / clampedScale);
+      this.translateY = -worldY + (mousePercentY * this.height / clampedScale);
+
+      this.scale = clampedScale;
     },
+
+    // ARRASTRE (PAN)
     startDrag(event) {
+      if (event.button !== 0) return; // Solo botón izquierdo
+      event.preventDefault();
+
       this.isDragging = true;
-      this.lastMouseX = event.clientX;
-      this.lastMouseY = event.clientY;
+      const rect = this.$refs.canvasContainer.getBoundingClientRect();
+      this.lastMouseX = event.clientX - rect.left;
+      this.lastMouseY = event.clientY - rect.top;
+
+      // Capturar eventos globales
+      window.addEventListener('mousemove', this.handleDragBound);
+      window.addEventListener('mouseup', this.endDragBound);
     },
+
     handleDrag(event) {
       if (!this.isDragging) return;
-      
-      const deltaX = event.clientX - this.lastMouseX;
-      const deltaY = event.clientY - this.lastMouseY;
-      
+      event.preventDefault();
+
+      const rect = this.$refs.canvasContainer.getBoundingClientRect();
+      const currentX = event.clientX - rect.left;
+      const currentY = event.clientY - rect.top;
+
+      const deltaX = currentX - this.lastMouseX;
+      const deltaY = currentY - this.lastMouseY;
+
       this.translateX += deltaX / this.scale;
       this.translateY += deltaY / this.scale;
-      
-      this.lastMouseX = event.clientX;
-      this.lastMouseY = event.clientY;
+
+      this.lastMouseX = currentX;
+      this.lastMouseY = currentY;
     },
+
     endDrag() {
+      if (!this.isDragging) return;
       this.isDragging = false;
+      window.removeEventListener('mousemove', this.handleDragBound);
+      window.removeEventListener('mouseup', this.endDragBound);
     },
+
+    // BOTONES DE ZOOM
+    zoomIn() {
+      this.simulateWheel(-300);
+    },
+    zoomOut() {
+      this.simulateWheel(300);
+    },
+    simulateWheel(deltaY) {
+      const rect = this.$refs.canvasContainer.getBoundingClientRect();
+      const event = {
+        deltaY,
+        preventDefault: () => {},
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2
+      };
+      this.handleZoom(event);
+    },
+
+    // RESETEAR
     resetView() {
       this.scale = 1;
       this.translateX = 0;
       this.translateY = 0;
     }
+  },
+
+  // BINDINGS PARA EVENT LISTENERS
+  mounted() {
+    this.handleDragBound = this.handleDrag.bind(this);
+    this.endDragBound = this.endDrag.bind(this);
+  },
+
+  beforeUnmount() {
+    // Limpieza por si acaso
+    window.removeEventListener('mousemove', this.handleDragBound);
+    window.removeEventListener('mouseup', this.endDragBound);
   }
 };
 </script>
@@ -182,6 +254,9 @@ export default {
   width: 100%;
   height: 100%;
   cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
   position: relative;
 }
 
@@ -233,7 +308,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: bold;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
