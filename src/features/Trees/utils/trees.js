@@ -19,7 +19,6 @@ export class BinarySearchTree {
     this.insertionOrder = [];
   }
 
-  // INSERT CON MENSAJE DE DUPLICADO
   insert(value) {
     const newNode = new TreeNode(value);
     
@@ -54,7 +53,7 @@ export class BinarySearchTree {
       }
       return this._insert(node.right, newNode);
     }
-    return false; // DUPLICADO
+    return false;
   }
 
   removeLast() {
@@ -96,13 +95,11 @@ export class BinarySearchTree {
     return Math.max(this.calculateHeight(node.left), this.calculateHeight(node.right)) + 1;
   }
 
-  // ✅ NUEVO: POSICIONAMIENTO SIN SUPERPOSICIÓN
   calculatePositions() {
     if (!this.root) {
       return { positions: {}, bounds: { minX: 0, maxX: 0, minY: 0, maxY: 0 } };
     }
 
-    // Paso 1: Obtener nodos en in-order (ordenado por valor)
     const inOrderNodes = [];
     const collectInOrder = (node) => {
       if (!node) return;
@@ -112,23 +109,20 @@ export class BinarySearchTree {
     };
     collectInOrder(this.root);
 
-    // Paso 2: Asignar X basado en in-order (evita superposición horizontal)
     const horizontalSpacing = 100;
     inOrderNodes.forEach((node, index) => {
       node.x = index * horizontalSpacing;
     });
 
-    // Paso 3: Asignar Y por profundidad
     const verticalSpacing = 100;
     const assignY = (node, depth = 0) => {
       if (!node) return;
-      node.y = 60 + depth * verticalSpacing; // Raíz en Y=60
+      node.y = 60 + depth * verticalSpacing;
       assignY(node.left, depth + 1);
       assignY(node.right, depth + 1);
     };
     assignY(this.root);
 
-    // Paso 4: Construir mapa de posiciones
     const positions = {};
     const traverse = (node) => {
       if (!node) return;
@@ -138,7 +132,6 @@ export class BinarySearchTree {
     };
     traverse(this.root);
 
-    // Paso 5: Calcular límites
     const xs = inOrderNodes.map(n => n.x);
     const ys = inOrderNodes.map(n => n.y);
     const padding = 100;
@@ -154,11 +147,91 @@ export class BinarySearchTree {
     };
   }
 
+  // ✅ SERIALIZACIÓN
+  toJSON() {
+    const serialize = (node) => {
+      if (!node) return null;
+      return {
+        value: node.value,
+        left: serialize(node.left),
+        right: serialize(node.right)
+      };
+    };
+    return {
+      root: serialize(this.root),
+      nodeCount: this.nodeCount,
+      treeHeight: this.treeHeight,
+      insertionOrder: [...this.insertionOrder]
+    };
+  }
+
+  // ✅ DESERIALIZACIÓN
+  fromJSON(data) {
+    if (!data || !data.root) {
+      this.clear();
+      return;
+    }
+
+    const deserialize = (obj) => {
+      if (!obj) return null;
+      const node = new TreeNode(obj.value);
+      node.left = deserialize(obj.left);
+      node.right = deserialize(obj.right);
+      return node;
+    };
+
+    this.root = deserialize(data.root);
+    this.nodeCount = data.nodeCount || this.calculateNodeCount(this.root);
+    this.treeHeight = data.treeHeight ?? this.calculateHeight(this.root);
+    this.insertionOrder = data.insertionOrder || this.collectNodeIds(this.root);
+  }
+
+  calculateNodeCount(node) {
+    if (!node) return 0;
+    return 1 + this.calculateNodeCount(node.left) + this.calculateNodeCount(node.right);
+  }
+
+  collectNodeIds(node, ids = []) {
+    if (!node) return ids;
+    ids.push(node.id);
+    this.collectNodeIds(node.left, ids);
+    this.collectNodeIds(node.right, ids);
+    return ids;
+  }
+
   clear() {
     this.root = null;
     this.nodeCount = 0;
     this.treeHeight = -1;
     this.insertionOrder = [];
-    globalNodeId = 1; // Reiniciar IDs
+    globalNodeId = 1;
+  }
+
+  // Recorridos (necesarios para animación)
+  inOrder(node = this.root, result = []) {
+    if (node) {
+      this.inOrder(node.left, result);
+      result.push(node.value);
+      this.inOrder(node.right, result);
+    }
+    return result;
+  }
+
+  preOrder(node = this.root, result = []) {
+    if (node) {
+      result.push(node.value);
+      this.preOrder(node.left, result);
+      this.preOrder(node.right, result);
+    }
+    return result;
+  }
+
+  postOrder(node = this.root, result = []) {
+    if (node) {
+      this.postOrder(node.left, result);
+      this.postOrder(node.right, result);
+      result.push(node.value);
+    }
+    return result;
   }
 }

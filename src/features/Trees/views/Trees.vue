@@ -33,6 +33,16 @@
         </div>
       </main>
     </div>
+    <Help
+      v-if="showHelp"
+      pdfEmbedUrl="https://drive.google.com/file/d/1P7zuzVJYF7oGlsK509FpQgZO3cJcKc_E/preview"
+      pdfViewerUrl="https://drive.google.com/file/d/1P7zuzVJYF7oGlsK509FpQgZO3cJcKc_E/view?usp=drive_link"
+      :currentTheme="theme"
+      @close="showHelp = false"
+    />
+     <button @click="showHelp = true" class="help-button" title="Ayuda" style="bottom: 25px;">
+      ?
+    </button>
   </div>
 </template>
 
@@ -41,17 +51,20 @@ import { ref, onMounted } from 'vue';
 import Navbar from '../../../components/Navbar.vue';
 import BuildTreeView from './BuildTreeView.vue';
 import ReconstructTreeView from './ReconstructTreeView.vue';
+import Help from '../../../components/Help.vue';
 
 export default {
   name: 'Trees',
   components: {
     Navbar,
     BuildTreeView,
-    ReconstructTreeView
+    ReconstructTreeView,
+    Help
   },
   setup() {
     const theme = ref(localStorage.getItem('data-theme') || 'light-theme');
     const activeTab = ref('build');
+    const showHelp = ref(false);
 
     onMounted(() => {
       // Escuchar cambios de tema si es necesario
@@ -59,6 +72,7 @@ export default {
 
     return {
       theme,
+      showHelp,
       activeTab
     };
   }
@@ -245,5 +259,30 @@ export default {
   .tab-content {
     min-height: 500px;
   }
+}
+.help-button {
+  position: fixed;
+  right: 25px;
+  bottom: 25px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #c59cf8;
+  color: white;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 999;
+  transition: transform 0.2s ease-in-out, background-color 0.2s;
+}
+
+.help-button:hover {
+  transform: scale(1.1);
+  background-color: #0056b3;
 }
 </style>

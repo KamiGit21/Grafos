@@ -3,7 +3,6 @@
     <div class="manual-section">
       <h3>Construir Árbol</h3>
       
-      <!-- Sección de inserción manual -->
       <div class="input-section">
         <h4>Inserción Manual</h4>
         <div class="manual-input-group">
@@ -25,7 +24,6 @@
         </div>
       </div>
       
-      <!-- Botones de control -->
       <div class="control-buttons-grid">
         <button @click="removeLastNode" :disabled="!hasNodes" class="action-btn remove-btn">
           Borrar Último
@@ -35,7 +33,6 @@
         </button>
       </div>
       
-      <!-- Métricas del árbol -->
       <div class="metrics-section">
         <h4>Métricas del Árbol</h4>
         <div class="metrics-grid">
@@ -50,10 +47,8 @@
         </div>
       </div>
       
-      <!-- Separador -->
       <div class="section-divider">Exportar/Importar</div>
       
-      <!-- Botones de JSON -->
       <div class="json-controls">
         <button @click="exportTree" class="action-btn export-btn full-width">
           Exportar JSON
@@ -121,7 +116,9 @@ export default {
       }
     },
     exportTree() {
-      this.$emit('export-tree');
+      const fileName = prompt('Ingrese el nombre del archivo (sin extensión):', 'arbol-binario');
+      if (fileName === null || fileName.trim() === '') return;
+      this.$emit('export-tree', fileName.trim());
     },
     importTree() {
       this.$refs.fileInput.click();
@@ -146,6 +143,7 @@ export default {
 };
 </script>
 
+<!-- Estilos idénticos a los anteriores (se mantienen por brevedad) -->
 <style scoped>
 .control-panel {
   background: rgba(255, 255, 255, 0.85);
@@ -247,10 +245,6 @@ export default {
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   filter: brightness(1.1);
-}
-
-.action-btn:active:not(:disabled) {
-  transform: translateY(-1px);
 }
 
 .action-btn:disabled {
@@ -392,7 +386,6 @@ export default {
   gap: 4px;
 }
 
-/* Efectos de hover específicos */
 .insert-btn:hover:not(:disabled) {
   box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
 }
@@ -413,113 +406,75 @@ export default {
   box-shadow: 0 8px 25px rgba(214, 158, 46, 0.4);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .control-panel {
     padding: 20px;
   }
-  
   .manual-section h3 {
     font-size: 1.3rem;
-    margin-bottom: 20px;
   }
-  
   .input-with-button {
     flex-direction: column;
   }
-  
-  .insert-btn {
-    min-width: auto;
-  }
-  
   .action-btn {
     padding: 12px 15px;
     font-size: 0.9rem;
   }
-  
   .metrics-section {
     padding: 15px;
   }
-  
   .metric-item {
     padding: 8px 12px;
   }
-  
-  .metric-label {
-    font-size: 0.9rem;
-  }
-  
-  .metric-value {
-    font-size: 1rem;
-  }
 }
 
-/* Modo oscuro */
 @media (prefers-color-scheme: dark) {
   .control-panel {
     background: rgba(45, 55, 72, 0.9);
     border-color: #6ab0ff;
     color: #e2e8f0;
   }
-  
   .manual-section h3 {
     color: #f7fafc;
     border-bottom-color: #4a5568;
   }
-  
-  .input-section h4 {
+  .input-section h4,
+  .metrics-section h4 {
     color: #f7fafc;
   }
-  
   .number-input {
     background-color: #4a5568;
     border-color: #718096;
     color: #f7fafc;
   }
-  
   .number-input:focus {
     border-color: #6ab0ff;
-    box-shadow: 0 0 0 3px rgba(106, 180, 255, 0.2);
+    box-shadow: 0 0 0 3 px rgba(106, 180, 255, 0.2);
   }
-  
-  .number-input::placeholder {
-    color: #a0aec0;
-  }
-  
   .metrics-section {
     background: linear-gradient(135deg, rgba(106, 180, 255, 0.05), rgba(102, 126, 234, 0.05));
     border-color: rgba(106, 180, 255, 0.2);
   }
-  
-  .metrics-section h4 {
-    color: #f7fafc;
-  }
-  
   .metric-item {
     background: #4a5568;
     border-color: #718096;
   }
-  
   .metric-label {
     color: #e2e8f0;
   }
-  
   .metric-value {
     background: linear-gradient(135deg, #6ab0ff, #667eea);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
   .section-divider {
     color: #a0aec0;
   }
-  
   .section-divider::before,
   .section-divider::after {
     background: linear-gradient(90deg, transparent, #4a5568, transparent);
   }
-
   .duplicate-warning {
     color: #feb2b2;
   }

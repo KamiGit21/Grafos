@@ -95,16 +95,13 @@ export default {
       this.stopTraversalAnimation();
       this.$forceUpdate();
     },
-    handleExportTree() {
+    handleExportTree(fileName) {
       const treeData = this.tree.toJSON();
       const dataStr = JSON.stringify(treeData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      
-      const exportFileDefaultName = 'arbol-binario.json';
-      
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
       const linkElement = document.createElement('a');
       linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.setAttribute('download', fileName + '.json');
       linkElement.click();
     },
     handleImportTree(treeData) {
@@ -118,30 +115,18 @@ export default {
       
       let traversalResult = [];
       switch (traversal) {
-        case 'inOrder':
-          traversalResult = this.tree.inOrder();
-          break;
-        case 'preOrder':
-          traversalResult = this.tree.preOrder();
-          break;
-        case 'postOrder':
-          traversalResult = this.tree.postOrder();
-          break;
+        case 'inOrder': traversalResult = this.tree.inOrder(); break;
+        case 'preOrder': traversalResult = this.tree.preOrder(); break;
+        case 'postOrder': traversalResult = this.tree.postOrder(); break;
       }
       
       this.traversalResult = traversalResult.join(', ');
       
-      const positions = this.tree.calculatePositions();
       const nodeIdsInOrder = [];
-      
       const getNodeIdByValue = (value, node = this.tree.root) => {
         if (!node) return null;
         if (node.value === value) return node.id;
-        
-        const leftResult = getNodeIdByValue(value, node.left);
-        if (leftResult) return leftResult;
-        
-        return getNodeIdByValue(value, node.right);
+        return getNodeIdByValue(value, node.left) || getNodeIdByValue(value, node.right);
       };
       
       for (const value of traversalResult) {
@@ -218,7 +203,6 @@ export default {
   background: white;
 }
 
-/* Scrollbar para la sección de controles */
 .control-section::-webkit-scrollbar {
   width: 6px;
 }
@@ -237,12 +221,10 @@ export default {
   .layout {
     flex-direction: column;
   }
-  
   .control-section {
     flex: 0 0 auto;
     max-height: 40vh;
   }
-  
   .canvas-section {
     min-height: 400px;
   }
@@ -252,11 +234,9 @@ export default {
   .build-tree-view {
     padding: 15px;
   }
-  
   .layout {
     gap: 15px;
   }
-  
   .control-section {
     gap: 15px;
   }
