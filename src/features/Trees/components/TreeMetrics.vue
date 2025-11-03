@@ -10,7 +10,7 @@
           </svg>
         </div>
         <div class="metric-info">
-          <span class="metric-label">Número de Nodos</span>
+          <span class="metric-label">Nodos</span>
           <span class="metric-value">{{ nodeCount }}</span>
         </div>
       </div>
@@ -22,7 +22,7 @@
           </svg>
         </div>
         <div class="metric-info">
-          <span class="metric-label">Altura del Árbol</span>
+          <span class="metric-label">Altura</span>
           <span class="metric-value">{{ treeHeight }}</span>
         </div>
       </div>
@@ -38,22 +38,10 @@
           <span class="metric-value">{{ isBalanced ? 'Sí' : 'No' }}</span>
         </div>
       </div>
-      
-      <div class="metric-card" v-if="hasNodes">
-        <div class="metric-icon">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z"/>
-          </svg>
-        </div>
-        <div class="metric-info">
-          <span class="metric-label">Nivel Actual</span>
-          <span class="metric-value">{{ currentLevel }}</span>
-        </div>
-      </div>
     </div>
     
     <div class="additional-info" v-if="hasNodes">
-      <h4>Información Adicional</h4>
+      <h4>Valores BST</h4>
       <div class="info-grid">
         <div class="info-item">
           <span>Mínimo:</span>
@@ -62,10 +50,6 @@
         <div class="info-item">
           <span>Máximo:</span>
           <strong>{{ maxValue }}</strong>
-        </div>
-        <div class="info-item">
-          <span>Promedio:</span>
-          <strong>{{ averageValue.toFixed(2) }}</strong>
         </div>
       </div>
     </div>
@@ -94,59 +78,13 @@ export default {
       return this.nodeCount > 0;
     },
     isBalanced() {
-      if (!this.tree || !this.tree.root) return true;
-      return this.checkBalance(this.tree.root) !== -1;
-    },
-    currentLevel() {
-      return this.treeHeight >= 0 ? this.treeHeight : 0;
+      return this.tree?.isBalanced ? this.tree.isBalanced() : false;
     },
     minValue() {
-      if (!this.tree || !this.tree.root) return '-';
-      return this.findMinValue(this.tree.root);
+      return this.tree?.findMinValue ? this.tree.findMinValue() : '-';
     },
     maxValue() {
-      if (!this.tree || !this.tree.root) return '-';
-      return this.findMaxValue(this.tree.root);
-    },
-    averageValue() {
-      if (!this.tree || !this.tree.root) return 0;
-      const values = this.getAllValues(this.tree.root);
-      return values.reduce((sum, val) => sum + val, 0) / values.length;
-    }
-  },
-  methods: {
-    checkBalance(node) {
-      if (!node) return 0;
-      
-      const leftHeight = this.checkBalance(node.left);
-      if (leftHeight === -1) return -1;
-      
-      const rightHeight = this.checkBalance(node.right);
-      if (rightHeight === -1) return -1;
-      
-      if (Math.abs(leftHeight - rightHeight) > 1) return -1;
-      
-      return Math.max(leftHeight, rightHeight) + 1;
-    },
-    findMinValue(node) {
-      while (node.left !== null) {
-        node = node.left;
-      }
-      return node.value;
-    },
-    findMaxValue(node) {
-      while (node.right !== null) {
-        node = node.right;
-      }
-      return node.value;
-    },
-    getAllValues(node, values = []) {
-      if (node !== null) {
-        this.getAllValues(node.left, values);
-        values.push(node.value);
-        this.getAllValues(node.right, values);
-      }
-      return values;
+      return this.tree?.findMaxValue ? this.tree.findMaxValue() : '-';
     }
   }
 };
@@ -154,31 +92,39 @@ export default {
 
 <style scoped>
 .tree-metrics {
-  padding: 1rem;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 16px;
+  border: 2px solid #805ad5;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+  font-family: 'Oswald', sans-serif;
+  backdrop-filter: blur(10px);
 }
 
 h3 {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
   color: #2d3748;
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e2e8f0;
+  text-transform: uppercase;
 }
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .metric-card {
   display: flex;
   align-items: center;
-  padding: 0.75rem;
+  padding: 12px;
   background: linear-gradient(135deg, #f7fafc, #edf2f7);
   border-radius: 8px;
   border: 1px solid #e2e8f0;
@@ -187,68 +133,72 @@ h3 {
 
 .metric-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
   border-color: #cbd5e0;
 }
 
 .metric-icon {
-  width: 2rem;
-  height: 2rem;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #4299e1, #3182ce);
+  background: linear-gradient(135deg, #805ad5, #6b46c1);
   border-radius: 6px;
-  margin-right: 0.75rem;
+  margin-right: 10px;
   color: white;
 }
 
 .metric-icon svg {
-  width: 1rem;
-  height: 1rem;
+  width: 16px;
+  height: 16px;
 }
 
 .metric-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .metric-label {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: #718096;
   font-weight: 500;
-  margin-bottom: 0.25rem;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .metric-value {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #2d3748;
 }
 
 .additional-info {
   border-top: 1px solid #e2e8f0;
-  padding-top: 1rem;
+  padding-top: 12px;
 }
 
 .additional-info h4 {
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 10px 0;
   color: #4a5568;
   font-size: 0.9rem;
   text-align: center;
+  font-weight: 600;
 }
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .info-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.5rem;
+  padding: 8px;
   background-color: #f7fafc;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
@@ -257,29 +207,30 @@ h3 {
 .info-item span {
   font-size: 0.7rem;
   color: #718096;
-  margin-bottom: 0.25rem;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .info-item strong {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #2d3748;
   font-weight: 600;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   
   .info-grid {
     grid-template-columns: 1fr;
-    gap: 0.25rem;
   }
   
   .info-item {
     flex-direction: row;
     justify-content: space-between;
-    padding: 0.75rem;
+    padding: 10px;
   }
   
   .info-item span {

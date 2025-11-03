@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/Santi_branch_2.0
 <template>
   <div class="traversal-panel">
     <h3>Recorridos del Árbol</h3>
@@ -148,8 +145,4 @@ button:not(:disabled):hover {
   font-family: monospace;
   word-break: break-all;
 }
-<<<<<<< HEAD
 </style>
-=======
-</style>
->>>>>>> origin/Santi_branch_2.0

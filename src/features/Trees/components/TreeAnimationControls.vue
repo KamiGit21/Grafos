@@ -14,11 +14,11 @@
     <div class="control-buttons">
       <button 
         @click="startAnimation" 
-        :disabled="!hasNodes || !isComplete || isAnimating" 
+        :disabled="!hasNodes || isAnimating" 
         class="action-btn start-btn"
       >
         <span class="btn-icon">▶</span>
-        Iniciar animación
+        Iniciar
       </button>
       <button 
         @click="stopAnimation" 
@@ -28,10 +28,6 @@
         <span class="btn-icon">⏹</span>
         Detener
       </button>
-    </div>
-    
-    <div v-if="!isComplete && hasNodes" class="warning-message">
-      ⚠️ El árbol no está completo. Complete todos los niveles para iniciar recorridos.
     </div>
     
     <div class="speed-control" v-if="isAnimating">
@@ -69,7 +65,6 @@ export default {
   name: 'TreeAnimationControls',
   props: {
     hasNodes: Boolean,
-    isComplete: Boolean, // Nueva prop para verificar si el árbol es completo
     isAnimating: Boolean,
     traversalResult: String,
     currentStep: Number
@@ -117,61 +112,49 @@ export default {
 </script>
 
 <style scoped>
-.warning-message {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  color: #856404;
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  margin-bottom: 15px;
-  text-align: center;
-}
-
-/* El resto del CSS permanece igual */
 .animation-controls {
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 16px;
-  padding: 25px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 16px;
   border: 2px solid #805ad5;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
   font-family: 'Oswald', sans-serif;
   backdrop-filter: blur(10px);
 }
 
 h3 {
   margin-top: 0;
-  margin-bottom: 25px;
+  margin-bottom: 16px;
   color: #2d3748;
   text-align: center;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  padding-bottom: 15px;
+  padding-bottom: 10px;
   border-bottom: 2px solid #e2e8f0;
   text-transform: uppercase;
 }
 
 .traversal-selection {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 label {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   font-weight: 600;
   color: #2d3748;
-  font-size: 1rem;
+  font-size: 0.9rem;
   letter-spacing: 0.3px;
 }
 
 .traversal-select {
   width: 100%;
-  padding: 12px 15px;
+  padding: 10px 12px;
   border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 6px;
   background-color: white;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-family: 'Oswald', sans-serif;
   font-weight: 500;
   transition: all 0.3s ease;
@@ -187,15 +170,15 @@ label {
 
 .control-buttons {
   display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .action-btn {
-  padding: 14px 20px;
-  border-radius: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-family: 'Oswald', sans-serif;
   font-weight: 600;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -203,17 +186,17 @@ label {
   color: white;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
   flex: 1;
 }
 
 .action-btn:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   filter: brightness(1.1);
 }
 
@@ -230,7 +213,7 @@ label {
 }
 
 .start-btn:hover:not(:disabled) {
-  box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+  box-shadow: 0 6px 20px rgba(72, 187, 120, 0.3);
 }
 
 .stop-btn {
@@ -238,31 +221,31 @@ label {
 }
 
 .stop-btn:hover:not(:disabled) {
-  box-shadow: 0 8px 25px rgba(245, 101, 101, 0.4);
+  box-shadow: 0 6px 20px rgba(245, 101, 101, 0.3);
 }
 
 .btn-icon {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
 }
 
 .speed-control {
-  margin-bottom: 20px;
-  padding: 20px;
+  margin-bottom: 16px;
+  padding: 12px;
   background: linear-gradient(135deg, rgba(128, 90, 213, 0.05), rgba(107, 70, 193, 0.05));
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid rgba(128, 90, 213, 0.2);
 }
 
 .speed-control label {
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   text-align: center;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .speed-slider {
   width: 100%;
-  margin-bottom: 10px;
-  height: 6px;
+  margin-bottom: 8px;
+  height: 5px;
   border-radius: 3px;
   background: linear-gradient(90deg, #48bb78, #d69e2e, #f56565);
   outline: none;
@@ -271,12 +254,12 @@ label {
 
 .speed-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: linear-gradient(135deg, #805ad5, #6b46c1);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   border: 2px solid white;
 }
 
@@ -285,55 +268,57 @@ label {
   text-align: center;
   font-weight: 600;
   color: #805ad5;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   letter-spacing: 0.3px;
 }
 
 .traversal-result {
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .result-display {
-  padding: 20px;
+  padding: 12px;
   background: linear-gradient(135deg, rgba(74, 144, 226, 0.05), rgba(102, 126, 234, 0.05));
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid rgba(74, 144, 226, 0.2);
-  min-height: 60px;
+  min-height: 50px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   justify-content: center;
+  font-size: 0.85rem;
 }
 
 .result-item {
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 6px 10px;
+  border-radius: 5px;
   transition: all 0.3s ease;
   font-weight: 600;
   background: white;
   border: 1px solid #e2e8f0;
   color: #4a5568;
+  font-size: 0.8rem;
 }
 
 .result-item.current {
   background: linear-gradient(135deg, #ed8936, #dd6b20);
   color: white;
-  transform: scale(1.1);
-  box-shadow: 0 4px 15px rgba(237, 137, 54, 0.4);
+  transform: scale(1.05);
+  box-shadow: 0 3px 12px rgba(237, 137, 54, 0.3);
   border: none;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .animation-controls {
-    padding: 20px;
+    padding: 12px;
   }
   
   h3 {
-    font-size: 1.3rem;
-    margin-bottom: 20px;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
   }
   
   .control-buttons {
@@ -341,21 +326,22 @@ label {
   }
   
   .action-btn {
-    padding: 12px 15px;
-    font-size: 0.9rem;
+    padding: 10px 12px;
+    font-size: 0.8rem;
   }
   
   .speed-control {
-    padding: 15px;
+    padding: 10px;
   }
   
   .result-display {
-    padding: 15px;
+    padding: 10px;
+    font-size: 0.8rem;
   }
   
   .result-item {
-    padding: 6px 10px;
-    font-size: 0.9rem;
+    padding: 5px 8px;
+    font-size: 0.75rem;
   }
 }
 
@@ -410,12 +396,6 @@ label {
   .result-item.current {
     background: linear-gradient(135deg, #ed8936, #dd6b20);
     color: white;
-  }
-  
-  .warning-message {
-    background: #332701;
-    border-color: #665c34;
-    color: #e2c08d;
   }
 }
 </style>
