@@ -6,7 +6,11 @@
         <TreeControlPanel
           :node-count="tree.nodeCount"
           :tree-height="tree.treeHeight"
+<<<<<<< HEAD
           :is-complete="isTreeComplete"
+=======
+          :existing-values="existingValues"
+>>>>>>> origin/main
           @insert-node="handleInsertNode"
           @remove-last-node="handleRemoveLastNode"
           @reset-tree="handleResetTree"
@@ -75,8 +79,22 @@ export default {
     };
   },
   computed: {
+<<<<<<< HEAD
     isTreeComplete() {
       return this.tree.isComplete();
+=======
+    existingValues() {
+      if (!this.tree.root) return [];
+      const values = [];
+      const traverse = (node) => {
+        if (!node) return;
+        traverse(node.left);
+        values.push(node.value);
+        traverse(node.right);
+      };
+      traverse(this.tree.root);
+      return values;
+>>>>>>> origin/main
     }
   },
   methods: {
@@ -99,17 +117,18 @@ export default {
       this.stopTraversalAnimation();
       this.$forceUpdate();
     },
+<<<<<<< HEAD
     
     handleExportTree() {
+=======
+    handleExportTree(fileName) {
+>>>>>>> origin/main
       const treeData = this.tree.toJSON();
       const dataStr = JSON.stringify(treeData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      
-      const exportFileDefaultName = 'arbol-binario.json';
-      
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
       const linkElement = document.createElement('a');
       linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.setAttribute('download', fileName + '.json');
       linkElement.click();
     },
     
@@ -128,6 +147,7 @@ export default {
       this.isAnimating = true;
       this.animationSpeed = speed;
       
+<<<<<<< HEAD
       try {
         const { values, nodeIds } = this.getTraversalWithNodeIds(traversal);
         
@@ -150,6 +170,13 @@ export default {
       } catch (error) {
         console.error('Error en animación:', error);
         this.stopTraversalAnimation();
+=======
+      let traversalResult = [];
+      switch (traversal) {
+        case 'inOrder': traversalResult = this.tree.inOrder(); break;
+        case 'preOrder': traversalResult = this.tree.preOrder(); break;
+        case 'postOrder': traversalResult = this.tree.postOrder(); break;
+>>>>>>> origin/main
       }
     },
 
@@ -157,12 +184,22 @@ export default {
       const values = [];
       const nodeIds = [];
       
+<<<<<<< HEAD
       const inOrder = (node) => {
         if (!node) return;
         inOrder(node.left);
         values.push(node.value);
         nodeIds.push(node.id);
         inOrder(node.right);
+=======
+      this.traversalResult = traversalResult.join(', ');
+      
+      const nodeIdsInOrder = [];
+      const getNodeIdByValue = (value, node = this.tree.root) => {
+        if (!node) return null;
+        if (node.value === value) return node.id;
+        return getNodeIdByValue(value, node.left) || getNodeIdByValue(value, node.right);
+>>>>>>> origin/main
       };
       
       const preOrder = (node) => {
@@ -259,6 +296,7 @@ export default {
   min-height: 600px;
 }
 
+<<<<<<< HEAD
 .right-panel {
   display: flex;
   flex-direction: column;
@@ -269,6 +307,9 @@ export default {
 /* Scrollbar personalizado */
 .left-panel::-webkit-scrollbar,
 .right-panel::-webkit-scrollbar {
+=======
+.control-section::-webkit-scrollbar {
+>>>>>>> origin/main
   width: 6px;
 }
 
@@ -290,6 +331,7 @@ export default {
     grid-template-rows: auto 1fr;
     gap: 15px;
   }
+<<<<<<< HEAD
   
   .right-panel {
     grid-column: 1 / -1;
@@ -301,6 +343,14 @@ export default {
   .right-panel > * {
     flex: 1;
     min-width: 300px;
+=======
+  .control-section {
+    flex: 0 0 auto;
+    max-height: 40vh;
+  }
+  .canvas-section {
+    min-height: 400px;
+>>>>>>> origin/main
   }
 }
 
@@ -308,12 +358,12 @@ export default {
   .build-tree-view {
     padding: 10px;
   }
-  
   .layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
     gap: 15px;
   }
+<<<<<<< HEAD
   
   .left-panel,
   .center-panel,
@@ -327,6 +377,10 @@ export default {
   
   .right-panel {
     flex-direction: column;
+=======
+  .control-section {
+    gap: 15px;
+>>>>>>> origin/main
   }
 }
 </style>

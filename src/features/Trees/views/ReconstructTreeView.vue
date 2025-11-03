@@ -41,34 +41,64 @@ export default {
     handleReconstructTree({ method, inOrder, otherOrder }) {
       try {
         if (method === 'inPre') {
-          this.tree.root = this.tree.buildTreeFromInPre(inOrder, otherOrder);
+          this.tree.root = this.buildTreeFromInPre(inOrder, otherOrder);
         } else {
-          this.tree.root = this.tree.buildTreeFromInPost(inOrder, otherOrder);
+          this.tree.root = this.buildTreeFromInPost(inOrder, otherOrder);
         }
-        
         this.tree.nodeCount = inOrder.length;
         this.tree.updateHeight();
-        
         this.$forceUpdate();
-        
       } catch (error) {
         alert('Error al reconstruir el árbol: ' + error.message);
       }
     },
+
+    // ✅ MÉTODOS DE RECONSTRUCCIÓN
+    buildTreeFromInPre(inOrder, preOrder) {
+      if (!inOrder.length || !preOrder.length) return null;
+      const rootValue = preOrder[0];
+      const root = new TreeNode(rootValue);
+      const rootIndex = inOrder.indexOf(rootValue);
+      if (rootIndex === -1) throw new Error('Recorridos inconsistentes');
+      
+      const inLeft = inOrder.slice(0, rootIndex);
+      const inRight = inOrder.slice(rootIndex + 1);
+      const preLeft = preOrder.slice(1, 1 + inLeft.length);
+      const preRight = preOrder.slice(1 + inLeft.length);
+      
+      root.left = this.buildTreeFromInPre(inLeft, preLeft);
+      root.right = this.buildTreeFromInPre(inRight, preRight);
+      return root;
+    },
+
+    buildTreeFromInPost(inOrder, postOrder) {
+      if (!inOrder.length || !postOrder.length) return null;
+      const rootValue = postOrder[postOrder.length - 1];
+      const root = new TreeNode(rootValue);
+      const rootIndex = inOrder.indexOf(rootValue);
+      if (rootIndex === -1) throw new Error('Recorridos inconsistentes');
+      
+      const inLeft = inOrder.slice(0, rootIndex);
+      const inRight = inOrder.slice(rootIndex + 1);
+      const postLeft = postOrder.slice(0, inLeft.length);
+      const postRight = postOrder.slice(inLeft.length, -1);
+      
+      root.left = this.buildTreeFromInPost(inLeft, postLeft);
+      root.right = this.buildTreeFromInPost(inRight, postRight);
+      return root;
+    },
+
     handleResetTree() {
       this.tree.clear();
       this.$forceUpdate();
     },
-    handleExportTree() {
+    handleExportTree(fileName) {
       const treeData = this.tree.toJSON();
       const dataStr = JSON.stringify(treeData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      
-      const exportFileDefaultName = 'arbol-reconstruido.json';
-      
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
       const linkElement = document.createElement('a');
       linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.setAttribute('download', fileName + '.json');
       linkElement.click();
     },
     handleImportTree(treeData) {
@@ -108,11 +138,9 @@ export default {
   .layout {
     flex-direction: column;
   }
-  
   .control-section {
     flex: 0 0 auto;
   }
-  
   .canvas-section {
     min-height: 400px;
   }
@@ -122,7 +150,6 @@ export default {
   .reconstruct-tree-view {
     padding: 15px;
   }
-  
   .layout {
     gap: 15px;
   }
