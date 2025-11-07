@@ -1,7 +1,7 @@
 
 <template>
   <div class="algorithm-modal-overlay" @click.self="$emit('close')" :class="currentTheme">
-    <Johnson
+    <Kruskal
       v-if="optimizationMode === 'maximize'"
       :nodes="nodes"
       :edges="edges"
@@ -11,7 +11,7 @@
       @clear-graph="$emit('clear-graph')"
     />
     
-    <JohnsonMin
+    <KruskalMin
       v-if="optimizationMode === 'minimize'"
       :nodes="nodes"
       :edges="edges"
@@ -24,8 +24,8 @@
 </template>
 
 <script setup>
-import Johnson from "./Johnson.vue";
-import JohnsonMin from "./JohnsonMin.vue";
+import Kruskal from "./Kruskal.vue";
+import KruskalMin from "./KruskalMin.vue";
 
 const emit = defineEmits(["close", "update-graph", "clear-graph"]);
 

@@ -200,7 +200,7 @@ export function useGraphData() {
     isEditing.value = false;
   };
 
-  const updateFromJohnson = (data) => {
+  const updateFromKruskal = (data) => {
     nodes.value = data.nodes;
     edges.value = data.edges;
     nextNodeId = data.nextNodeId || (Math.max(0, ...nodes.value.map(n => n.id)) + 1) || 1;
@@ -223,7 +223,7 @@ export function useGraphData() {
     removeElement,
     selectElement,
     deselectElement,
-    updateFromJohnson,
+    updateFromKruskal,
     getNextNodeId: () => nextNodeId,
     getNextEdgeId: () => nextEdgeId
   };

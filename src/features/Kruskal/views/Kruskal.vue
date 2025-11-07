@@ -36,7 +36,7 @@
 
         <AlgorithmSelector v-if="showAlgorithmSelector" :nodes="nodes" :edges="edges"
             :optimization-mode="optimizationMode" :current-theme="currentTheme" @close="showAlgorithmSelector = false"
-            @update-graph="updateFromJohnson" @clear-graph="clearCanvas" />
+            @update-graph="updateFromKruskal" @clear-graph="clearCanvas" />
 
         <button @click="showHelp = true" class="help-button" title="Ayuda" style="bottom: 25px;">?</button>
 
@@ -60,8 +60,8 @@ import NodeEditBox from '../components/NodeEditBox.vue';
 import EdgeEditBox from '../components/EdgeEditBox.vue';
 import MatrixModal from '../components/MatrixModal.vue';
 import AlgorithmSelector from '../components/AlgorithmSelector.vue';
-import Johnson from '../components/Johnson.vue';
-import JohnsonMin from '../components/JohnsonMin.vue';
+import Kruskal from '../components/Kruskal.vue';
+import KruskalMin from '../components/KruskalMin.vue';
 
 import { useGraphData } from '../composables/useGraphData';
 import { useGraphInteractions } from '../composables/useGraphInteractions';
@@ -71,7 +71,7 @@ import { useZoomPan } from '../composables/useZoomPan';
 import { useAdjacencyMatrix } from '../composables/useAdjacencyMatrix';
 
 export default {
-    name: 'Johnson',
+    name: 'Kruskal',
     components: {
         Navbar,
         Toolbar,
@@ -109,7 +109,7 @@ export default {
             flipButtonPosition,
             getNodeLabel,
             deselectElement,
-            updateFromJohnson,
+            updateFromKruskal,
             nodeMap
         } = graphData;
 
@@ -317,7 +317,7 @@ export default {
             // Funciones misceláneas
             clearCanvas,
             getEdgeValuePosition,
-            updateFromJohnson,
+            updateFromKruskal,
             showAlgorithmSelector,
             optimizationMode,
             setOptimizationMode,

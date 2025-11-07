@@ -1,12 +1,12 @@
 <template>
-  <div class="johnson-modal-overlay" @click.self="closeModal">
-    <div :class="['johnson-modal-content', theme]">
-      <header class="johnson-modal-header">
-        <h2>Algoritmo de Kruskal (Mínimo)</h2>
+  <div class="kruskal-modal-overlay" @click.self="closeModal">
+    <div :class="['kruskal-modal-content', theme]">
+      <header class="kruskal-modal-header">
+        <h2>Algoritmo de Kruskal (Maximo)</h2>
         <button class="close-button" @click="closeModal" title="Cerrar">×</button>
       </header>
 
-      <main class="johnson-modal-body" v-if="nodes.length > 0 && edges.length > 0">
+      <main class="kruskal-modal-body" v-if="nodes.length > 0 && edges.length > 0">
         <div class="info-panel">
           <p><strong>Peso total del árbol mínimo:</strong> {{ totalWeight }}</p>
         </div>
@@ -43,11 +43,11 @@
         </svg>
       </main>
 
-      <main v-else class="johnson-modal-body">
+      <main v-else class="kruskal-modal-body">
         <p>El grafo está vacío. Agrega nodos y aristas no dirigidas con pesos numéricos.</p>
       </main>
 
-      <footer class="johnson-modal-footer">
+      <footer class="kruskal-modal-footer">
         <button @click="exportJSON" class="footer-btn">Exportar JSON</button>
         <button @click="triggerImportJSON" class="footer-btn">Importar JSON</button>
         <input type="file" ref="importFileInput" @change="importJSON" accept=".json" style="display: none;" />
@@ -131,7 +131,7 @@ function runKruskal() {
       weight: Number(e.weight ?? e.value ?? 0)
     }))
     .filter(e => e.source !== e.target)
-    .sort((a, b) => a.weight - b.weight)
+    .sort((a, b) => b.weight - a.weight) // intercambiar a y b, para intercambiar entre minimo (a.weight - b.weight) y maximo (b.weight - a.weight)
 
   for (const e of sortedEdges) {
     if (find(e.source) !== find(e.target)) {
@@ -227,7 +227,7 @@ const clearAndClose = () => {
   pointer-events: none;
 }
 
-.johnson-modal-overlay {
+.kruskal-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -241,7 +241,7 @@ const clearAndClose = () => {
   backdrop-filter: blur(4px);
 }
 
-.johnson-modal-content {
+.kruskal-modal-content {
   width: 90%;
   height: 90%;
   max-width: 1200px;
@@ -252,25 +252,25 @@ const clearAndClose = () => {
   overflow: hidden;
 }
 
-.johnson-modal-body p {
+.kruskal-modal-body p {
   color: #2c2c2c;
 }
 
-.dark-theme .johnson-modal-body p {
+.dark-theme .kruskal-modal-body p {
   color: #e0e0e0;
 }
 
-.light-theme .johnson-modal-content {
+.light-theme .kruskal-modal-content {
   background: linear-gradient(180deg, rgba(253, 246, 236, 0.98) 0%, rgba(248, 238, 226, 0.95) 100%);
   border: 2px solid #c9a887;
 }
 
-.dark-theme .johnson-modal-content {
+.dark-theme .kruskal-modal-content {
   background: linear-gradient(180deg, rgba(44, 44, 44, 0.98) 0%, rgba(35, 35, 35, 0.95) 100%);
   border: 2px solid #242a31;
 }
 
-.johnson-modal-header {
+.kruskal-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -278,31 +278,31 @@ const clearAndClose = () => {
   flex-shrink: 0;
 }
 
-.light-theme .johnson-modal-header {
+.light-theme .kruskal-modal-header {
   background: rgba(255, 249, 242, 0.9);
   border-bottom: 1px solid rgba(224, 201, 182, 0.3);
 }
 
-.dark-theme .johnson-modal-header {
+.dark-theme .kruskal-modal-header {
   background: rgba(58, 58, 58, 0.9);
   border-bottom: 1px solid #555;
 }
 
-.johnson-modal-header h2 {
+.kruskal-modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.5px;
 }
 
-.light-theme .johnson-modal-header h2 {
+.light-theme .kruskal-modal-header h2 {
   background: linear-gradient(135deg, #8b7355 0%, #c9a887 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.dark-theme .johnson-modal-header h2 {
+.dark-theme .kruskal-modal-header h2 {
   background: linear-gradient(135deg, #c9b4a4 0%, #e0c9b6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -340,7 +340,7 @@ const clearAndClose = () => {
 }
 
 /* Body */
-.johnson-modal-body {
+.kruskal-modal-body {
   flex-grow: 1;
   overflow: hidden;
   padding: 10px;
@@ -348,7 +348,7 @@ const clearAndClose = () => {
   flex-direction: column;
 }
 
-.dark-theme .johnson-modal-body {
+.dark-theme .kruskal-modal-body {
   background-color: #333;
 }
 
@@ -494,7 +494,7 @@ const clearAndClose = () => {
 }
 
 /* Footer */
-.johnson-modal-footer {
+.kruskal-modal-footer {
   padding: 15px;
   text-align: center;
   flex-shrink: 0;
@@ -504,12 +504,12 @@ const clearAndClose = () => {
   flex-wrap: wrap;
 }
 
-.light-theme .johnson-modal-footer {
+.light-theme .kruskal-modal-footer {
   background: rgba(255, 249, 242, 0.9);
   border-top: 1px solid rgba(224, 201, 182, 0.3);
 }
 
-.dark-theme .johnson-modal-footer {
+.dark-theme .kruskal-modal-footer {
   background: rgba(58, 58, 58, 0.9);
   border-top: 1px solid #555;
 }
@@ -614,12 +614,12 @@ const clearAndClose = () => {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .johnson-modal-content {
+  .kruskal-modal-content {
     width: 95%;
     height: 95%;
   }
 
-  .johnson-modal-header h2 {
+  .kruskal-modal-header h2 {
     font-size: 1.2rem;
   }
 
