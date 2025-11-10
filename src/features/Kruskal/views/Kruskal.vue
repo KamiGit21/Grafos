@@ -40,9 +40,9 @@
 
         <button @click="showHelp = true" class="help-button" title="Ayuda" style="bottom: 25px;">?</button>
 
-        <Help v-if="showHelp" pdfEmbedUrl="https://drive.google.com/file/d/1FaLhb7EODYlc1O05qWsFYJatUQCYA8_0/preview"
-            pdfViewerUrl="https://drive.google.com/file/d/1FaLhb7EODYlc1O05qWsFYJatUQCYA8_0/view?usp=drive_link"
-            :currentTheme="currentTheme" @close="showHelp = false" />
+        <Help v-if="showHelp" pdfEmbedUrl="https://drive.google.com/file/d/1VS5_7B6TxYUouG-l7XXhi_XcvRN6-46y/preview"
+            pdfViewerUrl="https://drive.google.com/file/d/1VS5_7B6TxYUouG-l7XXhi_XcvRN6-46y/view?usp=drive_link"
+            :currentTheme="currentTheme" @close="showHelp = false"/>
 
         <input type="file" ref="importFileInput" @change="importJSON" accept=".json" style="display: none;" />
     </div>
