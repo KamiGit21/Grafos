@@ -32,20 +32,7 @@
       </select>
     </label>
 
-    <label>
-      Dirección:
-      <select @change="$emit('update-direction', $event)" class="direction-select">
-        <option value="forward" :selected="edge.directed && !isReversed()">
-          {{ getNodeLabel(edge.from) }} → {{ getNodeLabel(edge.to) }}
-        </option>
-        <option value="backward" :selected="edge.directed && isReversed()">
-          {{ getNodeLabel(edge.to) }} → {{ getNodeLabel(edge.from) }}
-        </option>
-      </select>
-      <small style="display: block; margin-top: 5px; color: #666; font-size: 0.85em;">
-        Todas las aristas deben ser dirigidas!!
-      </small>
-    </label>
+    <!-- Kruskal: edges are undirected, no direction controls -->
     
     <button @click="$emit('close')">Guardar</button>
   </div>
@@ -55,8 +42,7 @@
 
 const props = defineProps({
   edge: Object,
-  position: Object,
-  getNodeLabel: Function
+  position: Object
 });
 
 const allowOnlyPositiveNumbers = (event) => {
@@ -70,13 +56,7 @@ const allowOnlyPositiveNumbers = (event) => {
   }
 };
 
-// Helper para determinar si la arista está en dirección inversa
-const isReversed = () => {
-  // Esta función se puede mejorar según tu lógica específica
-  return false;
-};
-
-defineEmits(['close', 'update-direction']);
+defineEmits(['close']);
 </script>
 
 <style scoped>
