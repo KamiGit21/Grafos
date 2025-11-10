@@ -1,5 +1,5 @@
 <template>
-  <div class="arrays-display">
+  <div class="arrays-display" :class="theme">
     <div class="array-section">
       <h4>Antes:</h4>
       <div class="array-values">{{ formatArray(before) }}</div>
@@ -21,6 +21,10 @@ defineProps({
   after: {
     type: Array,
     default: () => []
+  },
+  theme: {
+    type: String,
+    default: 'light-theme'
   }
 });
 
@@ -38,32 +42,48 @@ const formatArray = (arr) => {
 }
 
 .array-section {
-  background: v-bind('theme === "light-theme" ? "rgba(255,255,255,0.85)" : "rgba(58, 58, 58, 0.9)"');
-  border-radius: 8px;
-  padding: 15px;
-  border: 1px solid v-bind('theme === "light-theme" ? "#ddd" : "#555"');
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(224, 201, 182, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.dark-theme .array-section {
+  background: rgba(58, 58, 58, 1);
+  border-color: rgba(70, 70, 70, 1);
 }
 
 .array-section h4 {
-  margin: 0 0 10px 0;
-  color: v-bind('theme === "light-theme" ? "#333" : "#e0e0e0"');
+  margin: 0 0 12px 0;
+  color: #8b7355;
   text-align: center;
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.5px;
+}
+
+.dark-theme .array-section h4 {
+  color: #c9b4a4;
 }
 
 .array-values {
   font-family: 'Courier New', monospace;
-  font-size: 0.85rem;
-  color: v-bind('theme === "light-theme" ? "#333" : "#e0e0e0"');
+  font-size: 0.9rem;
+  color: #6d5940;
   word-break: break-all;
   text-align: center;
-  line-height: 1.4;
-  background: v-bind('theme === "light-theme" ? "rgba(248, 248, 248, 0.8)" : "rgba(68, 68, 68, 0.8)"');
-  padding: 10px;
-  border-radius: 4px;
-  border: 1px solid v-bind('theme === "light-theme" ? "#e0e0e0" : "#444"');
+  line-height: 1.6;
+  background: rgba(248, 238, 226, 0.5);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(224, 201, 182, 0.4);
+}
+
+.dark-theme .array-values {
+  background: rgba(58, 58, 58, 0.8);
+  border-color: rgba(70, 70, 70, 0.5);
+  color: #e0c9b6;
 }
 </style>

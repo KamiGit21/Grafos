@@ -1,10 +1,12 @@
 <template>
   <div class="sorts-container" :class="theme">
-    <Navbar :theme="theme"/>
+    <Navbar/>
+       
     <div class="sorts-content">
-      
       <header class="sorts-header">
-        <h1>Algoritmos de Ordenamiento</h1>
+        <div class="header-content">
+          <h1>ALGORITMOS DE ORDENAMIENTO</h1>
+        </div>
       </header>
 
       <main class="sorts-main">
@@ -29,12 +31,15 @@
         <!-- Área principal de visualización -->
         <section class="visualization-area">
           <!-- Display de Arrays -->
+          <div class="arrays-display-wrapper">
           <ArrayDisplay 
             :before="originalArray"
             :after="sortedArray"
           />
+          </div>
           
           <!-- Visualización de Burbujas -->
+          <div class="animation-wrapper">
           <BubbleAnimation 
             :array="displayArray"
             :currentIndex="currentIndex"
@@ -46,15 +51,46 @@
             :sortedIndices="sortedIndices"
             :selectedAlgorithm="selectedAlgorithm"
           />
+          </div>
 
           <!-- Botones de control -->
           <div class="control-buttons">
-            <button @click="resetArray" class="control-btn">Reiniciar</button>
-            <button @click="shuffleArray" class="control-btn shuffle-btn" :disabled="originalArray.length === 0">Desordenar</button>
-            <button @click="pauseResumeSort" :disabled="!isSorting && !isPaused" class="control-btn">
-              {{ isPaused ? 'Reanudar' : 'Pausar' }}
+            <button @click="resetArray" class="control-btn reset-btn">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12Z" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>Reiniciar</span>
             </button>
-            <button @click="clearAll" class="control-btn clear-btn">Borrar</button>
+            
+            <button @click="shuffleArray" class="control-btn shuffle-btn" :disabled="originalArray.length === 0">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 3H21V8M16 21H21V16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 3L14 10M21 21L14 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 8V3H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 3L10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Desordenar</span>
+            </button>
+            
+            <button @click="pauseResumeSort" :disabled="!isSorting && !isPaused" class="control-btn pause-btn">
+              <svg v-if="!isPaused" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 4H6V20H10V4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18 4H14V20H18V4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 3L19 12L5 21V3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>{{ isPaused ? 'Reanudar' : 'Pausar' }}</span>
+            </button>
+            
+            <button @click="clearAll" class="control-btn clear-btn">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Borrar</span>
+            </button>
           </div>
         </section>
       </main>
@@ -824,157 +860,221 @@ onMounted(() => {
   background-color: #0056b3;
 }
 
-/* Resto de tus estilos... */
 .sorts-container {
-  min-height: 100vh;
   font-family: 'Oswald', sans-serif;
-  transition: background-color 0.3s;
+  min-height: 100vh;
+  transition: background-color 0.3s ease;
 }
 
-.light-theme .sorts-container {
-  background-color: #f9f9f9;
-  color: #333;
-}
 
-.dark-theme .sorts-container {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
-}
 
 .sorts-content {
-  padding: 20px;
-  max-width: 1400px;
+  padding: 24px;
+  max-width: 1600px;
   margin: 0 auto;
-  margin-top: 80px;
+  margin-top: 90px;
+  background-color: transparent;
 }
 
 .sorts-header {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 20px;
   margin-bottom: 30px;
-  padding: 20px;
-  background: v-bind('theme === "light-theme" ? "rgba(255,255,255,0.8)" : "rgba(58, 58, 58, 0.9)"');
-  border-radius: 12px;
-  border: 2px solid v-bind('theme === "light-theme" ? "#4a90e2" : "#6ab0ff"');
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 24px 30px;
+  background: linear-gradient(135deg, rgba(255, 249, 242, 0.95) 0%, rgba(248, 238, 226, 0.9) 100%);
+  border-radius: 16px;
+  border: 2px solid rgba(224, 201, 182, 0.3);
+  box-shadow: 0 8px 32px rgba(139, 115, 85, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.dark-theme .sorts-header {
+  background: linear-gradient(135deg, rgba(44, 44, 44, 0.95) 0%, rgba(35, 35, 35, 0.9) 100%);
+  border-color: rgba(70, 70, 70, 0.5);
+}
+
+
+.header-content {
+  flex: 1;
 }
 
 .sorts-header h1 {
   margin: 0;
-  font-size: 2.2rem;
-  font-weight: 600;
-  color: v-bind('theme === "light-theme" ? "#333" : "#e0e0e0"');
-  letter-spacing: 1px;
+  font-size: 3rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #8b7355 0%, #c9a887 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+.dark-theme .sorts-header h1 {
+  background: linear-gradient(135deg, #c9b4a4 0%, #e0c9b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #a08970;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 .sorts-main {
   display: grid;
-  grid-template-columns: 350px 1fr;
-  gap: 25px;
+  grid-template-columns: 380px 1fr;
+  gap: 24px;
   align-items: start;
 }
 
 .control-sidebar {
   position: sticky;
-  top: 100px;
+  top: 110px;
 }
 
 .visualization-area {
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  background: v-bind('theme === "light-theme" ? "rgba(255,255,255,0.8)" : "rgba(58, 58, 58, 0.9)"');
-  border-radius: 12px;
-  padding: 20px;
-  border: 2px solid v-bind('theme === "light-theme" ? "#4a90e2" : "#6ab0ff"');
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  min-height: 500px;
+  gap: 20px;
+}
+
+.arrays-display-wrapper,
+.animation-wrapper {
+  background: linear-gradient(180deg, rgba(255, 249, 242, 0.95) 0%, rgba(248, 238, 226, 0.9) 100%);
+  border-radius: 16px;
+  padding: 24px;
+  border: 2px solid rgba(224, 201, 182, 0.3);
+  box-shadow: 0 8px 32px rgba(139, 115, 85, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.dark-theme .arrays-display-wrapper,
+.dark-theme .animation-wrapper {
+  background: linear-gradient(180deg, rgba(44, 44, 44, 0.95) 0%, rgba(35, 35, 35, 0.9) 100%);
+  border-color: rgba(70, 70, 70, 0.5);
+}
+
+.animation-wrapper {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .control-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
   padding: 20px;
-  background: v-bind('theme === "light-theme" ? "rgba(255,255,255,0.8)" : "rgba(58, 58, 58, 0.9)"');
-  border-radius: 8px;
-  border: 1px solid v-bind('theme === "light-theme" ? "#ddd" : "#555"');
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: linear-gradient(180deg, rgba(255, 249, 242, 0.95) 0%, rgba(248, 238, 226, 0.9) 100%);
+  border-radius: 16px;
+  border: 2px solid rgba(224, 201, 182, 0.3);
+  box-shadow: 0 8px 32px rgba(139, 115, 85, 0.12);
+}
+
+.dark-theme .control-buttons {
+  background: linear-gradient(180deg, rgba(44, 44, 44, 0.95) 0%, rgba(35, 35, 35, 0.9) 100%);
+  border-color: rgba(70, 70, 70, 0.5);
 }
 
 .control-btn {
-  padding: 12px 24px;
-  border-radius: 6px;
+  padding: 14px 20px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 1rem;
-  font-family: 'Oswald', sans-serif;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  background-color: v-bind('theme === "light-theme" ? "#f0f0f0" : "#4f4f4f"');
-  border: 1px solid v-bind('theme === "light-theme" ? "#ccc" : "#666"');
-  color: v-bind('theme === "light-theme" ? "#333" : "#e0e0e0"');
-  letter-spacing: 0.5px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.control-btn svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s ease;
+}
+
+.control-btn:hover:not(:disabled) svg {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.control-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.control-btn:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.reset-btn {
+  background: linear-gradient(135deg, #4299e1, #3182ce);
+  color: white;
+}
+
+.reset-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3182ce, #2c5aa0);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(66, 153, 225, 0.3);
 }
 
 .shuffle-btn {
-  background-color: v-bind('theme === "light-theme" ? "#48bb78" : "#2d7d46"');
-  border-color: v-bind('theme === "light-theme" ? "#38a169" : "#225e3a"');
+  background: linear-gradient(135deg, #48bb78, #38a169);
   color: white;
-}
-
-.clear-btn {
-  background-color: v-bind('theme === "light-theme" ? "#ff6b6b" : "#d32f2f"');
-  border-color: v-bind('theme === "light-theme" ? "#ff5252" : "#b71c1c"');
-  color: white;
-}
-
-.control-btn:hover:not(:disabled) {
-  background-color: v-bind('theme === "light-theme" ? "#e0e0e0" : "#5a5a5a"');
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .shuffle-btn:hover:not(:disabled) {
-  background-color: v-bind('theme === "light-theme" ? "#38a169" : "#225e3a"');
+  background: linear-gradient(135deg, #38a169, #2f855a);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(72, 187, 120, 0.3);
+}
+
+.pause-btn {
+  background: linear-gradient(135deg, #ed8936, #dd6b20);
+  color: white;
+}
+
+.pause-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dd6b20, #c05621);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(237, 137, 54, 0.3);
+}
+
+.clear-btn {
+  background: linear-gradient(135deg, #f56565, #e53e3e);
+  color: white;
 }
 
 .clear-btn:hover:not(:disabled) {
-  background-color: v-bind('theme === "light-theme" ? "#ff5252" : "#c62828"');
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 101, 101, 0.3);
 }
 
 .control-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  filter: grayscale(0.5);
 }
 
-@media (max-width: 1024px) {
-  .sorts-main {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .control-sidebar {
-    position: static;
-  }
-  
-  .sorts-header h1 {
-    font-size: 1.8rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .sorts-content {
-    padding: 15px;
-    margin-top: 70px;
-  }
-  
-  .control-buttons {
-    flex-direction: column;
-  }
-  
-  .control-btn {
-    width: 100%;
-  }
-}
 </style>

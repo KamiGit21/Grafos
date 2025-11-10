@@ -1,5 +1,5 @@
 <template>
-  <section class="hero-section" :class="$parent.currentTheme">
+  <section class="hero-section" :class="currentTheme">
     <!-- Objetos flotantes -->
     <div class="floating-shapes">
       <div class="shape shape-1"></div>
