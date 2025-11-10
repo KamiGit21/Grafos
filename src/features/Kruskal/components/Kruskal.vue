@@ -209,7 +209,7 @@ function importJSON(e) {
   reader.readAsText(file)
 }
 
-const clearAndClose = () => {
+const clearAndClose = () => { // tener cuidado al comentar los splice
   nodes.splice(0)
   edges.splice(0)
   if (confirm("¿Estás seguro de que quieres borrar todo el grafo? Esta acción no se puede deshacer.")) {
@@ -439,14 +439,7 @@ const clearAndClose = () => {
 .node-label {
   font-weight: bold;
   pointer-events: none;
-}
-
-.light-theme .node-label {
-  fill: #000;
-}
-
-.dark-theme .node-label {
-  fill: #fff;
+  fill: #000; /* para dark y light mode */
 }
 
 .node-slack-label {

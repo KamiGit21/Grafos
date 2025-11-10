@@ -25,7 +25,7 @@
             <!-- Aristas -->
             <g v-for="edge in edgesWithCoords" :key="edge.id">
               <line :x1="edge.x1" :y1="edge.y1" :x2="edge.x2" :y2="edge.y2"
-                :stroke="edge.isInMST ? '#dc2626' : edgeDefaultColor" :stroke-width="edge.isInMST ? '4' : '2'" />
+                :stroke="edge.isInMST ? '#2563EB' : edgeDefaultColor" :stroke-width="edge.isInMST ? '4' : '2'" />
 
               <text :x="(edge.x1 + edge.x2) / 2" :y="(edge.y1 + edge.y2) / 2 - 5" text-anchor="middle"
                 class="edge-label">
@@ -35,8 +35,8 @@
 
             <!-- Nodos -->
             <g v-for="node in nodes" :key="node.id" :transform="`translate(${node.x}, ${node.y})`">
-              <circle :r="20" :fill="node.isInMST ? '#fecaca' : node.color"
-                :stroke="node.isInMST ? '#dc2626' : node.borderColor" :stroke-width="node.isInMST ? 3 : 2" />
+              <circle :r="20" :fill="node.isInMST ? '#bfdbfe' : node.color"
+                :stroke="node.isInMST ? '#2563EB' : node.borderColor" :stroke-width="node.isInMST ? 3 : 2" />
               <text text-anchor="middle" y="5" class="node-label">{{ node.label }}</text>
             </g>
           </g>
@@ -210,9 +210,9 @@ function importJSON(e) {
 }
 
 const clearAndClose = () => {
-  nodes.splice(0)
-  edges.splice(0)
   if (confirm("¿Estás seguro de que quieres borrar todo el grafo? Esta acción no se puede deshacer.")) {
+    nodes.splice(0);
+    edges.splice(0);
     emit('clear-graph');
     closeModal();
   }
@@ -439,14 +439,7 @@ const clearAndClose = () => {
 .node-label {
   font-weight: bold;
   pointer-events: none;
-}
-
-.light-theme .node-label {
-  fill: #000;
-}
-
-.dark-theme .node-label {
-  fill: #fff;
+  fill: #000; /* para dark y light mode */
 }
 
 .node-slack-label {
