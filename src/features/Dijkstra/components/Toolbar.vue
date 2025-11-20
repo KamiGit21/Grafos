@@ -2,7 +2,7 @@
   <header class="toolbar-top">
     <div class="header-content">
       <div class="brand-section">
-        <h1>PIZARRA DE GRAFOS-ALGORITMO DE JOHNSON</h1>
+        <h1>PIZARRA DE GRAFOS-ALGORITMO DE DIJKSTRA</h1>
       </div>
       
       <nav class="toolbar-nav">
@@ -54,7 +54,7 @@
         <div class="divider-vertical"></div>
 
         <div class="nav-group">
-          <span class="group-label">Johnson</span>
+          <span class="group-label">DIJKSTRA</span>
           <div class="button-group">
             <button 
               @click="$emit('set-optimization-mode', 'minimize')"
