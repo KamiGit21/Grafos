@@ -99,8 +99,8 @@
 
     <Help
       v-if="showHelp"
-      pdfEmbedUrl="https://drive.google.com/file/d/1FaLhb7EODYlc1O05qWsFYJatUQCYA8_0/preview"
-      pdfViewerUrl="https://drive.google.com/file/d/1Z1CGvYQ-wbtqpdpv9JyYJmI11OB5sqJr/view?usp=sharing"
+      pdfEmbedUrl="https://drive.google.com/file/d/1Z1CGvYQ-wbtqpdpv9JyYJmI11OB5sqJr/preview"
+      pdfViewerUrl="https://drive.google.com/file/d/1Z1CGvYQ-wbtqpdpv9JyYJmI11OB5sqJr/view?usp=drive_link"
       :currentTheme="currentTheme"
       @close="showHelp = false"
     />
