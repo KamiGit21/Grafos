@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { getNodeRadius } from '../utils/graphHelpers';
-import { validateEdgeCreation, showEdgeValidationError, validateDirectionChange } from '../utils/graphValidations';
+import { validateEdgeCreation, showEdgeValidationError } from '../utils/graphValidations';
 
 export function useGraphInteractions(graphDataComposable) {
     const {
@@ -109,7 +109,8 @@ export function useGraphInteractions(graphDataComposable) {
                 }
 
                 const newEdge = addEdge(edgeStartNode.value.id, node.id);
-                newEdge.directed = true;
+                // Ensure edges are undirected for Kruskal
+                newEdge.directed = false;
                 edgeStartNode.value = null;
                 selectElement(newEdge);
                 isEditing.value = true;
@@ -208,68 +209,11 @@ export function useGraphInteractions(graphDataComposable) {
         draggedHandle.value = null;
     };
 
-    const flipSelectedEdgeDirection = () => {
-        if (selectedElement.value?.type === 'edge' && selectedElement.value.directed) {
-            const edge = selectedElement.value;
-            
-            const edgeWeight = parseFloat(edge.value) || 0;
+    // In Kruskal edges are undirected; flipping direction is a no-op
+    const flipSelectedEdgeDirection = () => {};
 
-            const validation = validateEdgeCreation(
-                edge.to,
-                edge.from,
-                edgeWeight,
-                edges.value.filter(e => e.id !== edge.id),
-                nodes.value
-            );
-
-            if (!validation.valid) {
-                showEdgeValidationError(validation.error, validation.message, getNodeLabel);
-                return;
-            }
-
-            [edge.from, edge.to] = [edge.to, edge.from];
-        }
-    };
-
-    const updateEdgeDirection = (event) => {
-        if (!selectedElement.value || selectedElement.value.type !== 'edge') return;
-        const direction = event.target.value;
-        const edge = selectedElement.value;
-        
-        let newDirected;
-        
-        if (direction === 'none') {
-            showEdgeValidationError(
-                'NO_UNDIRECTED',
-                'Las aristas deben ser dirigidas',
-                getNodeLabel
-            );
-            event.target.value = edge.directed ? 'forward' : 'backward';
-            return;
-        } else if (direction === 'forward') {
-            newDirected = true;
-        } else if (direction === 'backward') {
-            newDirected = true;
-        }
-
-        const validation = validateDirectionChange(
-            edge,
-            direction,
-            edges.value,
-            nodes.value
-        );
-
-        if (!validation.valid) {
-            showEdgeValidationError(validation.error, validation.message, getNodeLabel);
-            event.target.value = edge.directed ? 'forward' : 'backward';
-            return;
-        }
-
-        if (direction === 'backward') {
-            [edge.from, edge.to] = [edge.to, edge.from];
-        }
-        edge.directed = newDirected;
-    };
+    // Direction changes are disabled in Kruskal (edges are undirected)
+    const updateEdgeDirection = (event) => {};
 
     return {
         isAddingNode,
