@@ -5,7 +5,8 @@ import KruskalRoutes from '../features/Kruskal/routes/routes.js';
 import AsignacionRoutes from '../features/Asignacion/routes/routes.js';
 import SortsRoutes from '../features/Sorts/routes/routes.js';
 import NorthWestRoutes from '../features/NorthWest/routes/routes.js';
-import TreesRoutes from '../features/Trees/routes/routes.js'; // ← Agregar esta línea
+import TreesRoutes from '../features/Trees/routes/routes.js';
+import DijkstraRoutes from '../features/Dijkstra/routes/routes.js';
 
 
 const routes = [
@@ -16,6 +17,7 @@ const routes = [
   ...SortsRoutes,
   ...NorthWestRoutes,
   ...TreesRoutes,
+  ...DijkstraRoutes,
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
