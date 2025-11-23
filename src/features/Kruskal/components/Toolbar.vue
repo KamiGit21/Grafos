@@ -54,7 +54,7 @@
         <div class="divider-vertical"></div>
 
         <div class="nav-group">
-          <span class="group-label">Asignación</span>
+          <span class="group-label">Kruskal</span>
           <div class="button-group">
             <button 
               @click="$emit('set-optimization-mode', 'minimize')"
