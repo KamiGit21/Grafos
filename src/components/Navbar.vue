@@ -7,7 +7,7 @@
             v-for="item in navItems"
             :key="item.name"
             :class="['nav-button', { active: activeRoute === item.route }]"
-            @click="navigate(item.route)"
+            @click="navigate(item.route, item.isExternal)"
             @mouseenter="handleHover"
             @mouseleave="handleLeave"
           >
@@ -34,6 +34,7 @@
 
 <script>
 import themeManager from '../utils/theme-manager'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'Navbar',
@@ -41,14 +42,15 @@ export default {
   data() {
     return {
       navItems: [
-        { name: 'Home', route: '/' },
-        { name: 'Johnson', route: '/johnson' },
-        { name: 'Asignación', route: '/asignacion' },
-        { name: 'Northwest', route: '/northwest' },
-        { name: 'Sorts', route: '/sorts' },
-        { name: 'Trees', route: '/trees' },
-        { name: 'Kruskal', route: '/kruskal' },
-        { name: 'Dijkstra', route: '/dijkstra'}
+        { name: 'Home', route: '/', isExternal: false },
+        { name: 'Johnson', route: '/johnson', isExternal: false },
+        { name: 'Asignación', route: '/asignacion', isExternal: false },
+        { name: 'Northwest', route: '/northwest', isExternal: false },
+        { name: 'Sorts', route: '/sorts', isExternal: false },
+        { name: 'Trees', route: '/trees', isExternal: false },
+        { name: 'Kruskal', route: '/kruskal', isExternal: false },
+        { name: 'Dijkstra', route: '/dijkstra', isExternal: false },
+        { name: 'Fuzzy Logic', route: 'http://localhost:3000/api/matlab/open_fuzzy', isExternal: true }
       ],
       activeRoute: this.$route ? this.$route.path : '/',
       currentTheme: 'light-theme',
@@ -80,9 +82,64 @@ export default {
   },
   
   methods: {
-    navigate(route) {
-      this.$router.push(route)
-      this.activeRoute = route
+    async navigate(route, isExternal = false) {
+      if (isExternal) {
+        // Mostrar loading
+        Swal.fire({
+          title: 'Abriendo Fuzzy Logic Tool',
+          text: 'Conectando con MATLAB...',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading()
+          }
+        })
+
+        try {
+          const response = await fetch(route, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          const data = await response.json()
+          
+          if (response.ok) {
+            console.log('Fuzzy Logic abierto:', data)
+            
+            Swal.fire({
+              icon: 'success',
+              title: '¡Éxito!',
+              text: 'Fuzzy Logic Tool abierto en MATLAB',
+              confirmButtonText: 'Entendido',
+              timer: 3000,
+              timerProgressBar: true
+            })
+          } else {
+            console.error('Error al abrir Fuzzy Logic:', data)
+            
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: data.message || 'No se pudo abrir Fuzzy Logic Tool',
+              confirmButtonText: 'Cerrar'
+            })
+          }
+        } catch (error) {
+          console.error('Error de conexión:', error)
+          
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'No se pudo conectar con el servidor. Verifica que esté ejecutándose.',
+            confirmButtonText: 'Cerrar'
+          })
+        }
+      } else {
+        // Navegación normal de Vue Router
+        this.$router.push(route)
+        this.activeRoute = route
+      }
     },
     
     toggleTheme() {
