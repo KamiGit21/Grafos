@@ -7,6 +7,7 @@ import SortsRoutes from '../features/Sorts/routes/routes.js';
 import NorthWestRoutes from '../features/NorthWest/routes/routes.js';
 import TreesRoutes from '../features/Trees/routes/routes.js';
 import DijkstraRoutes from '../features/Dijkstra/routes/routes.js';
+import FuzzyRoutes from '../features/Fuzzy/routes/routes.js';
 
 
 const routes = [
@@ -18,6 +19,7 @@ const routes = [
   ...NorthWestRoutes,
   ...TreesRoutes,
   ...DijkstraRoutes,
+  ...FuzzyRoutes,
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

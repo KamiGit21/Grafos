@@ -50,7 +50,7 @@ export default {
         { name: 'Trees', route: '/trees', isExternal: false },
         { name: 'Kruskal', route: '/kruskal', isExternal: false },
         { name: 'Dijkstra', route: '/dijkstra', isExternal: false },
-        { name: 'Fuzzy Logic', route: 'http://localhost:3000/api/matlab/open_fuzzy', isExternal: true }
+        { name: 'Fuzzy Logic', route: '/fuzzy', isExternal: false }
       ],
       activeRoute: this.$route ? this.$route.path : '/',
       currentTheme: 'light-theme',
