@@ -7,7 +7,6 @@ import SortsRoutes from '../features/Sorts/routes/routes.js';
 import NorthWestRoutes from '../features/NorthWest/routes/routes.js';
 import TreesRoutes from '../features/Trees/routes/routes.js'; // ← Agregar esta línea
 
-
 const routes = [
   ...homeRoutes,
   ...JohnsonRoutes, 
@@ -20,6 +19,12 @@ const routes = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../components/NotFound.vue'),
+  },
+  // Ruta para el componente FuzzyLauncherButton
+  {
+    path: '/fuzzy',
+    name: 'FuzzyLauncher',
+    component: () => import('../features/Matlab/components/FuzzyLauncherButton.vue')
   },
 ];
 

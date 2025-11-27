@@ -46,6 +46,7 @@ export default {
         { name: 'Asignación', route: '/asignacion' },
         { name: 'Northwest', route: '/northwest' },
         { name: 'Sorts', route: '/sorts' },
+        { name: 'Matlab Fuzzy', route: '/fuzzy' },
         { name: 'Trees', route: '/trees' },
         { name: 'Kruskal', route: '/kruskal' }
       ],
