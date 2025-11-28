@@ -4,13 +4,14 @@
     <div class="fuzzy-content">
       <!-- Header Section -->
       <section class="hero-section">
+        <div class="title-card">
         <h1 class="main-title">Fuzzy Logic</h1>
         <p class="subtitle">Sistemas de Lógica Difusa para Toma de Decisiones Inteligentes</p>
+        </div>
       </section>
-
       <!-- ¿Qué es Fuzzy Logic? -->
-      <section class="info-section">
-        <h2 class="section-title">¿Qué es la Lógica Difusa?</h2>
+      <section class="title-card">
+        <h2 class="main-title2">¿Qué es la Lógica Difusa?</h2>
         <div class="content-card">
           <p>
             La <strong>Lógica Difusa (Fuzzy Logic)</strong> es una forma de lógica que permite manejar conceptos 
@@ -27,7 +28,9 @@
 
       <!-- Funciones Principales -->
       <section class="info-section">
+        <center>
         <h2 class="section-title">Funciones Principales</h2>
+        </center>
         <div class="features-grid">
           <div class="feature-card">
             <div class="feature-icon">🎯</div>
@@ -108,6 +111,7 @@
           </div>
         </div>
       </section>
+      </div>
 
       <!-- Botón de Acción -->
       <section class="action-section">
@@ -123,7 +127,6 @@
         </div>
       </section>
     </div>
-  </div>
 </template>
 
 <script>
@@ -213,10 +216,36 @@ export default {
 </script>
 
 <style scoped>
+.light-theme .graph-editor-container { background-color: rgba(247, 243, 240, 1); color: #333; }
+.dark-theme .graph-editor-container { background-color: rgba(44, 44, 44, 1); color: #e0e0e0; }
+
+.title-card {
+  background: #F9F0E5;
+  padding: 1rem;
+  border-radius: 20px;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
 .fuzzy-container {
-  min-height: 100vh;
+  width: 90vw;
+  max-width: 1600px;
+  /* aspect-ratio: 16 / 9; */
   display: flex;
   flex-direction: column;
+  font-family: 'Oswald', sans-serif;
+  transition: background-color 0.3s;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 40px;
 }
 
 .fuzzy-content {
@@ -236,7 +265,17 @@ export default {
 .main-title {
   font-size: 3.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #ff6b9d, #c59cf8);
+  background: linear-gradient(135deg, #ac6ef8, #fc1361);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+
+.main-title2 {
+  font-size: 3rem;
+  font-weight: 700;
+  background: linear-gradient(135deg,#fc1361, #ac6ef8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -250,24 +289,20 @@ export default {
   margin: 0 auto;
 }
 
-/* Info Sections */
-.info-section {
-  margin-bottom: 4rem;
-}
-
 .section-title {
   font-size: 2rem;
   margin-bottom: 2rem;
   text-align: center;
-  color: var(--text-primary);
+  color: #c59cf8;
   border-bottom: 3px solid #c59cf8;
   padding-bottom: 0.5rem;
   display: inline-block;
+
 }
 
 /* Content Cards */
 .content-card {
-  background: var(--card-bg);
+  background: #8f44ea;
   padding: 2rem;
   border-radius: 15px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -278,6 +313,7 @@ export default {
 .content-card p {
   margin-bottom: 1rem;
   font-size: 1.1rem;
+  color: #F9F0E5;
 }
 
 /* Features Grid */
@@ -308,7 +344,7 @@ export default {
 }
 
 .feature-card h3 {
-  color: #c59cf8;
+  color: #fc1361;
   margin-bottom: 1rem;
   font-size: 1.3rem;
 }
@@ -352,7 +388,7 @@ export default {
 }
 
 .app-card h3 {
-  color: #c59cf8;
+  color: #fc1361;
   margin-bottom: 1rem;
   font-size: 1.2rem;
 }
@@ -393,7 +429,7 @@ export default {
 .action-card h2 {
   font-size: 2rem;
   margin-bottom: 1rem;
-  color: var(--text-primary);
+  color: black;
 }
 
 .action-card p {
