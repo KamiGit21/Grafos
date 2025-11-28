@@ -302,7 +302,7 @@ export default {
 
 /* Content Cards */
 .content-card {
-  background: #8f44ea;
+  background: #c59cf8;
   padding: 2rem;
   border-radius: 15px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -313,7 +313,7 @@ export default {
 .content-card p {
   margin-bottom: 1rem;
   font-size: 1.1rem;
-  color: #F9F0E5;
+  color: #333333;
 }
 
 /* Features Grid */
