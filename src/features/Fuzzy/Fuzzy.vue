@@ -3,14 +3,11 @@
     <Navbar />
     <div class="fuzzy-content">
       <!-- Header Section -->
+       <div class="title-card">
       <section class="hero-section">
-        <div class="title-card">
+        
         <h1 class="main-title">Fuzzy Logic</h1>
         <p class="subtitle">Sistemas de Lógica Difusa para Toma de Decisiones Inteligentes</p>
-        </div>
-      </section>
-      <!-- ¿Qué es Fuzzy Logic? -->
-      <section class="title-card">
         <h2 class="main-title2">¿Qué es la Lógica Difusa?</h2>
         <div class="content-card">
           <p>
@@ -25,6 +22,7 @@
           </p>
         </div>
       </section>
+      </div>
 
       <!-- Funciones Principales -->
       <section class="info-section">
@@ -116,7 +114,7 @@
       <!-- Botón de Acción -->
       <section class="action-section">
         <div class="action-card">
-          <h2>¿Listo para experimentar con Fuzzy Logic?</h2>
+          <h1 class="main-title">¿Listo para experimentar con Fuzzy Logic?</h1>
           <p>Haz clic en el botón para abrir el Fuzzy Logic Toolbox de MATLAB y comenzar a crear tus propios sistemas de lógica difusa</p>
           <button @click="openMatlabFuzzy" class="matlab-button">
             <span class="button-icon">⚡</span>
@@ -220,7 +218,7 @@ export default {
 .dark-theme .graph-editor-container { background-color: rgba(44, 44, 44, 1); color: #e0e0e0; }
 
 .title-card {
-  background: #F9F0E5;
+  background: #ffffff;
   padding: 1rem;
   border-radius: 20px;
 }
